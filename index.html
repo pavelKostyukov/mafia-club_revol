@@ -202,6 +202,48 @@ a { color: inherit; text-decoration: none; }
   .about-logo { max-width: 240px; margin: 0 auto; }
 }
 
+  /* ============ GAME DETAIL PAGE ============ */
+.game-detail-view { display: none; padding: 30px 22px 40px; max-width: 800px; margin: 0 auto; }
+.game-detail-card { background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 24px; }
+.game-detail-cover { height: 280px; background-size: cover; background-position: center; background-color: #1a1410; }
+.game-detail-info { padding: 20px 24px; }
+.game-detail-info h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+.game-detail-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; color: #555; }
+.game-detail-price { font-size: 20px; font-weight: 700; color: var(--green); }
+.game-detail-location { font-size: 13px; color: var(--blue-bright); margin-bottom: 16px; }
+.game-detail-hosts { display: flex; gap: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.game-detail-host { display: flex; gap: 12px; align-items: center; }
+.game-detail-host .photo { width: 56px; height: 56px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; }
+.game-detail-host .photo svg { width: 100%; height: 100%; }
+.game-detail-host .name { font-size: 16px; font-weight: 700; }
+.game-detail-host .role { font-size: 13px; color: #777; }
+
+.game-detail-players { background: var(--card); border-radius: 16px; padding: 20px 24px; box-shadow: var(--shadow); }
+.game-detail-players h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+.player-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.player-row:last-child { border-bottom: none; }
+.player-row .photo { width: 48px; height: 48px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; position: relative; }
+.player-row .photo svg { width: 100%; height: 100%; }
+.player-row .info { flex: 1; min-width: 0; }
+.player-row .name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+.player-row .title { font-size: 12px; color: #777; }
+.player-row .stats { display: flex; gap: 16px; font-size: 13px; color: #555; }
+.player-row .stat { display: flex; flex-direction: column; align-items: center; }
+.player-row .stat-num { font-weight: 700; color: #1a1a1a; }
+.player-row .stat-label { font-size: 10px; color: #999; }
+
+.player-badge { position: absolute; bottom: -2px; right: -2px; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; color: white; text-transform: uppercase; }
+.player-badge.veteran { background: #1e88e5; }
+.player-badge.star { background: #e74c3c; }
+.player-badge.newbie { background: #95a5a6; }
+.player-badge.master { background: #f39c12; }
+
+@media (max-width: 768px) {
+  .game-detail-cover { height: 200px; }
+  .game-detail-hosts { flex-direction: column; }
+  .player-row .stats { gap: 12px; }
+}
+
 /* ============ HOSTS LIST ============ */
 .hosts-title { font-size: 28px; font-weight: 600; margin: 32px 0 20px; color: #1a1a1a; letter-spacing: -.01em; }
 .hosts-list { display: flex; gap: 22px; flex-wrap: wrap; }
@@ -323,11 +365,256 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
 .profile-back a { display: inline-flex; align-items: center; gap: 8px; color: var(--blue); font-size: 14px; cursor: pointer; }
 .profile-back a:hover { color: var(--blue-deep); }
 
+/* PROFILE FIXES */
 @media (max-width: 900px) {
-  .profile-grid { grid-template-columns: 1fr; gap: 24px; }
-  .profile-left, .profile-right { align-items: center; }
-  .profile-name-block { align-items: center; }
-  .profile-avatar-big { width: 240px; height: 240px; }
+  .profile-grid { 
+    grid-template-columns: 1fr; 
+    gap: 24px; 
+    text-align: center;
+  }
+  .profile-left, .profile-right { 
+    align-items: center; 
+  }
+  .profile-name-block { 
+    align-items: center; 
+  }
+  .profile-avatar-big { 
+    width: 240px; 
+    height: 240px; 
+  }
+  .profile-medals {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .medal-item {
+    width: 100px;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-avatar-big { 
+    width: 200px; 
+    height: 200px; 
+  }
+  .profile-name-block h1 { 
+    font-size: 24px; 
+  }
+  .profile-stats {
+    grid-template-columns: 1fr;
+  }
+  .stat-col + .stat-col {
+    border-left: none;
+    border-top: 1px solid #d8dde3;
+    padding-top: 20px;
+    margin-top: 20px;
+  }
+}
+
+  /* ============ ADMIN PANEL ============ */
+.admin-view { 
+  display: none; 
+  padding: 30px 22px 40px; 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  background: var(--bg);
+  min-height: 100vh;
+}
+.admin-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 24px; 
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+.admin-header h1 { 
+  font-size: 28px; 
+  font-weight: 700; 
+  color: var(--text);
+}
+.admin-header button {
+  padding: 10px 20px;
+  background: var(--red);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.admin-tabs { 
+  display: flex; 
+  gap: 8px; 
+  margin-bottom: 24px; 
+  border-bottom: 1px solid var(--border);
+}
+.admin-tab { 
+  padding: 12px 24px; 
+  background: none; 
+  color: var(--text-light); 
+  font-size: 15px; 
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: all .2s;
+}
+.admin-tab:hover { 
+  color: var(--blue); 
+}
+.admin-tab.active { 
+  color: var(--blue); 
+  border-bottom-color: var(--blue);
+}
+
+.admin-tab-content { 
+  background: var(--card); 
+  border-radius: 12px; 
+  padding: 24px; 
+  box-shadow: var(--shadow);
+}
+
+.admin-list { 
+  margin-top: 20px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px;
+}
+.admin-item { 
+  background: var(--bg); 
+  padding: 16px; 
+  border-radius: 8px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  border: 1px solid var(--border);
+}
+.admin-item-info h3 { 
+  font-size: 16px; 
+  font-weight: 600; 
+  margin-bottom: 4px;
+}
+.admin-item-info p { 
+  font-size: 13px; 
+  color: var(--text-light);
+}
+.admin-item-actions { 
+  display: flex; 
+  gap: 8px;
+}
+.admin-item-actions button { 
+  padding: 8px 16px; 
+  border-radius: 6px; 
+  font-size: 13px; 
+  font-weight: 500;
+}
+.admin-item-actions .edit { 
+  background: var(--blue); 
+  color: white;
+}
+.admin-item-actions .delete { 
+  background: var(--red); 
+  color: white;
+}
+
+.admin-modal { 
+  max-width: 500px; 
+}
+.admin-modal form { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 14px;
+}
+.admin-modal label { 
+  font-size: 13px; 
+  font-weight: 600; 
+  color: var(--text); 
+  margin-bottom: -8px;
+}
+.admin-modal input, 
+.admin-modal select { 
+  padding: 11px 13px; 
+  border: 1px solid var(--border); 
+  border-radius: 8px; 
+  font-family: inherit; 
+  font-size: 14px;
+}
+.admin-modal input:focus, 
+.admin-modal select:focus { 
+  outline: none; 
+  border-color: var(--blue);
+}
+
+.admin-upload { 
+  margin-bottom: 24px; 
+  padding: 20px; 
+  background: var(--bg); 
+  border-radius: 8px;
+  border: 2px dashed var(--border);
+}
+.admin-upload h3 { 
+  font-size: 16px; 
+  margin-bottom: 12px;
+}
+.admin-upload input[type=file] { 
+  margin-bottom: 12px;
+}
+#uploadStatus { 
+  margin-top: 12px; 
+  font-size: 13px; 
+  color: var(--green);
+}
+
+.admin-images-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+  gap: 16px;
+}
+.admin-image-card { 
+  position: relative; 
+  aspect-ratio: 16/9; 
+  border-radius: 8px; 
+  overflow: hidden; 
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.admin-image-card img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover;
+}
+.admin-image-url { 
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  right: 0; 
+  background: rgba(0,0,0,0.8); 
+  color: white; 
+  padding: 8px; 
+  font-size: 11px; 
+  word-break: break-all;
+}
+.admin-image-copy { 
+  position: absolute; 
+  top: 8px; 
+  right: 8px; 
+  padding: 6px 12px; 
+  background: var(--blue); 
+  color: white; 
+  border-radius: 6px; 
+  font-size: 12px; 
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .admin-tabs { 
+    overflow-x: auto; 
+    scrollbar-width: none;
+  }
+  .admin-item { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 12px;
+  }
+  .admin-images-grid { 
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============ DRAWER ============ */
@@ -428,6 +715,12 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
     <div class="drawer-section-title">Прочее</div>
     <a onclick="closeDrawer(); goToAbout()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>О клубе</a>
     <a onclick="closeDrawer(); goToContacts()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>Контакты</a>
+    <!-- В drawer-nav, после "Контакты" -->
+<div class="drawer-section-title">Администрирование</div>
+<a onclick="closeDrawer(); openAdmin()">
+  <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+  Админ-панель
+</a>
   </nav>
   <div class="drawer-footer">
     <button class="drawer-login-btn" onclick="alert('Скоро: вход через Telegram')">Войти</button>
@@ -584,6 +877,28 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
     </div>
   </div>
 </section>
+  <!-- Добавьте после #profile-view -->
+<section id="game-detail-view" class="game-detail-view">
+  <div class="profile-back">
+    <a onclick="showMainView()">← Назад</a>
+  </div>
+  <div class="game-detail-card">
+    <div class="game-detail-cover" id="gdCover"></div>
+    <div class="game-detail-info">
+      <h2 id="gdTitle">Городская мафия</h2>
+      <div class="game-detail-meta">
+        <span id="gdTime">19:00 — 00:45</span>
+        <span class="game-detail-price" id="gdPrice">5 500₽</span>
+      </div>
+      <div class="game-detail-location" id="gdLocation"></div>
+      <div class="game-detail-hosts" id="gdHosts"></div>
+    </div>
+  </div>
+  <div class="game-detail-players">
+    <h3>Участники (<span id="gdPlayersCount">14</span>/<span id="gdPlayersMax">16</span>)</h3>
+    <div id="gdPlayersList"></div>
+  </div>
+</section>
 
 <footer>
   <div class="brand-row">Mafia Club</div>
@@ -618,7 +933,399 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
     <p class="legal">Нажимая на кнопку, вы принимаете <a href="#">пользовательское соглашение</a> и даёте согласие на обработку персональных данных</p>
   </div>
 </div>
+// ====== ADMIN PANEL ======
+const ADMIN_PASSWORD = 'mafia2026'; // Измените на свой пароль
 
+function openAdmin() {
+  const pass = prompt('Введите пароль администратора:');
+  if (pass !== ADMIN_PASSWORD) {
+    alert('Неверный пароль');
+    return;
+  }
+  
+  document.getElementById('main-view').style.display = 'none';
+  document.getElementById('profile-view').style.display = 'none';
+  document.getElementById('game-detail-view').style.display = 'none';
+  document.getElementById('admin-view').style.display = 'block';
+  
+  loadAdminData();
+  window.scrollTo({ top: 0 });
+}
+
+function closeAdmin() {
+  document.getElementById('admin-view').style.display = 'none';
+  showMainView();
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById('admin-' + tab).style.display = 'block';
+}
+
+async function loadAdminData() {
+  await loadAdminGames();
+  await loadAdminHosts();
+  await loadAdminImages();
+}
+
+// ====== ИГРЫ ======
+async function loadAdminGames() {
+  const list = document.getElementById('adminGamesList');
+  list.innerHTML = '<div class="loading-spinner"></div>';
+  
+  try {
+    let games = [];
+    if (sb) {
+      const { data, error } = await sb.from('games').select('*').order('start_at');
+      if (error) throw error;
+      games = data || [];
+    } else {
+      // Демо
+      games = buildDemoGames(today);
+    }
+    
+    if (!games.length) {
+      list.innerHTML = '<p style="text-align:center;color:#999;">Нет игр</p>';
+      return;
+    }
+    
+    list.innerHTML = games.map(g => `
+      <div class="admin-item">
+        <div class="admin-item-info">
+          <h3>${g.title || typeLabel(g.game_type)}</h3>
+          <p>${formatDateLabel(new Date(g.start_at))} · ${formatTime(g.start_at)} · ${g.price}₽</p>
+        </div>
+        <div class="admin-item-actions">
+          <button class="edit" onclick="editGame('${g.id}')">Редактировать</button>
+          <button class="delete" onclick="deleteGame('${g.id}')">Удалить</button>
+        </div>
+      </div>
+    `).join('');
+    
+  } catch (e) {
+    list.innerHTML = '<p style="color:red;">Ошибка загрузки: ' + e.message + '</p>';
+  }
+}
+
+function showGameForm(id = null) {
+  document.getElementById('gameFormTitle').textContent = id ? 'Редактировать игру' : 'Новая игра';
+  document.getElementById('gameForm').reset();
+  document.getElementById('gameId').value = id || '';
+  
+  // Загрузить ведущих в select
+  loadHostsSelect();
+  
+  if (id) {
+    const g = allLoadedGames.find(x => String(x.id) === String(id));
+    if (g) {
+      document.getElementById('gameTitle').value = g.title || '';
+      document.getElementById('gameSubtitle').value = g.subtitle || '';
+      document.getElementById('gameType').value = g.game_type || 'city_mafia';
+      document.getElementById('gameStart').value = new Date(g.start_at).toISOString().slice(0, 16);
+      document.getElementById('gameEnd').value = new Date(g.end_at).toISOString().slice(0, 16);
+      document.getElementById('gameLocation').value = g.location || '';
+      document.getElementById('gamePrice').value = g.price || 1500;
+      document.getElementById('gameMaxSeats').value = g.max_seats || 10;
+      document.getElementById('gameCover').value = g.cover_image_url || '';
+    }
+  }
+  
+  document.getElementById('adminGameModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGameForm() {
+  document.getElementById('adminGameModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function saveGame(e) {
+  e.preventDefault();
+  
+  const id = document.getElementById('gameId').value;
+  const data = {
+    title: document.getElementById('gameTitle').value,
+    subtitle: document.getElementById('gameSubtitle').value || null,
+    game_type: document.getElementById('gameType').value,
+    start_at: new Date(document.getElementById('gameStart').value).toISOString(),
+    end_at: new Date(document.getElementById('gameEnd').value).toISOString(),
+    location: document.getElementById('gameLocation').value,
+    price: parseInt(document.getElementById('gamePrice').value),
+    max_seats: parseInt(document.getElementById('gameMaxSeats').value),
+    cover_image_url: document.getElementById('gameCover').value || null,
+    host_id: document.getElementById('gameHost').value || null,
+  };
+  
+  if (!sb) {
+    alert('Демо-режим: данные не сохраняются в БД');
+    closeGameForm();
+    return;
+  }
+  
+  try {
+    let result;
+    if (id) {
+      result = await sb.from('games').update(data).eq('id', id);
+    } else {
+      result = await sb.from('games').insert(data);
+    }
+    
+    if (result.error) throw result.error;
+    
+    alert('Игра сохранена!');
+    closeGameForm();
+    loadAdminGames();
+    loadGames();
+    
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+async function deleteGame(id) {
+  if (!confirm('Удалить игру?')) return;
+  
+  if (!sb) {
+    alert('Демо-режим: удаление недоступно');
+    return;
+  }
+  
+  try {
+    const { error } = await sb.from('games').delete().eq('id', id);
+    if (error) throw error;
+    
+    alert('Игра удалена');
+    loadAdminGames();
+    loadGames();
+    
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+function editGame(id) {
+  showGameForm(id);
+}
+
+// ====== ВЕДУЩИЕ ======
+async function loadAdminHosts() {
+  const list = document.getElementById('adminHostsList');
+  list.innerHTML = '<div class="loading-spinner"></div>';
+  
+  try {
+    let hosts = [];
+    if (sb) {
+      const { data, error } = await sb.from('hosts').select('*').order('name');
+      if (error) throw error;
+      hosts = data || [];
+    } else {
+      hosts = [
+        { id: 1, name: 'Дядя Коля', role: 'мастер' },
+        { id: 2, name: 'Дядя Боря', role: 'ведущий' },
+        { id: 3, name: 'Артём', role: 'ведущий' },
+      ];
+    }
+    
+    if (!hosts.length) {
+      list.innerHTML = '<p style="text-align:center;color:#999;">Нет ведущих</p>';
+      return;
+    }
+    
+    list.innerHTML = hosts.map(h => `
+      <div class="admin-item">
+        <div class="admin-item-info">
+          <h3>${h.name}</h3>
+          <p>${h.role}</p>
+        </div>
+        <div class="admin-item-actions">
+          <button class="edit" onclick="editHost('${h.id}')">Редактировать</button>
+          <button class="delete" onclick="deleteHost('${h.id}')">Удалить</button>
+        </div>
+      </div>
+    `).join('');
+    
+  } catch (e) {
+    list.innerHTML = '<p style="color:red;">Ошибка: ' + e.message + '</p>';
+  }
+}
+
+async function loadHostsSelect() {
+  const select = document.getElementById('gameHost');
+  try {
+    let hosts = [];
+    if (sb) {
+      const { data } = await sb.from('hosts').select('*').order('name');
+      hosts = data || [];
+    } else {
+      hosts = [
+        { id: 1, name: 'Дядя Коля' },
+        { id: 2, name: 'Дядя Боря' },
+        { id: 3, name: 'Артём' },
+      ];
+    }
+    select.innerHTML = '<option value="">Выберите ведущего</option>' + 
+      hosts.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+  } catch (e) {
+    select.innerHTML = '<option>Ошибка загрузки</option>';
+  }
+}
+
+function showHostForm(id = null) {
+  document.getElementById('hostFormTitle').textContent = id ? 'Редактировать ведущего' : 'Новый ведущий';
+  document.getElementById('hostForm').reset();
+  document.getElementById('hostId').value = id || '';
+  
+  // TODO: загрузить данные если редактирование
+  
+  document.getElementById('adminHostModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeHostForm() {
+  document.getElementById('adminHostModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function saveHost(e) {
+  e.preventDefault();
+  
+  const id = document.getElementById('hostId').value;
+  const data = {
+    name: document.getElementById('hostName').value,
+    role: document.getElementById('hostRole').value,
+    photo_url: document.getElementById('hostPhoto').value || null,
+  };
+  
+  if (!sb) {
+    alert('Демо-режим: данные не сохраняются');
+    closeHostForm();
+    return;
+  }
+  
+  try {
+    let result;
+    if (id) {
+      result = await sb.from('hosts').update(data).eq('id', id);
+    } else {
+      result = await sb.from('hosts').insert(data);
+    }
+    
+    if (result.error) throw result.error;
+    
+    alert('Ведущий сохранён!');
+    closeHostForm();
+    loadAdminHosts();
+    
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+async function deleteHost(id) {
+  if (!confirm('Удалить ведущего?')) return;
+  
+  if (!sb) {
+    alert('Демо-режим');
+    return;
+  }
+  
+  try {
+    const { error } = await sb.from('hosts').delete().eq('id', id);
+    if (error) throw error;
+    alert('Удалено');
+    loadAdminHosts();
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+function editHost(id) {
+  showHostForm(id);
+}
+
+// ====== КАРТИНКИ ======
+async function loadAdminImages() {
+  const grid = document.getElementById('adminImagesList');
+  grid.innerHTML = '<div class="loading-spinner"></div>';
+  
+  if (!sb) {
+    grid.innerHTML = '<p style="text-align:center;color:#999;">Демо-режим: загрузка картинок недоступна</p>';
+    return;
+  }
+  
+  try {
+    const { data, error } = await sb.storage.from('images').list();
+    if (error) throw error;
+    
+    if (!data || !data.length) {
+      grid.innerHTML = '<p style="text-align:center;color:#999;">Нет загруженных картинок</p>';
+      return;
+    }
+    
+    const images = await Promise.all(
+      data.map(async file => {
+        const { data: urlData } = await sb.storage.from('images').getPublicUrl(file.name);
+        return { name: file.name, url: urlData.publicUrl };
+      })
+    );
+    
+    grid.innerHTML = images.map(img => `
+      <div class="admin-image-card">
+        <img src="${img.url}" alt="${img.name}">
+        <div class="admin-image-copy" onclick="copyImageUrl('${img.url}')">Копировать URL</div>
+        <div class="admin-image-url">${img.url}</div>
+      </div>
+    `).join('');
+    
+  } catch (e) {
+    grid.innerHTML = '<p style="color:red;">Ошибка: ' + e.message + '</p>';
+  }
+}
+
+async function uploadImage() {
+  const file = document.getElementById('adminImageFile').files[0];
+  if (!file) {
+    alert('Выберите файл');
+    return;
+  }
+  
+  if (!sb) {
+    alert('Демо-режим: загрузка недоступна');
+    return;
+  }
+  
+  const status = document.getElementById('uploadStatus');
+  status.textContent = 'Загрузка...';
+  status.style.color = var(--blue);
+  
+  try {
+    const fileName = Date.now() + '-' + file.name;
+    const { error } = await sb.storage.from('images').upload(fileName, file);
+    
+    if (error) throw error;
+    
+    const { data } = await sb.storage.from('images').getPublicUrl(fileName);
+    
+    status.textContent = '✓ Загружено! URL: ' + data.publicUrl;
+    status.style.color = 'var(--green)';
+    
+    document.getElementById('adminImageFile').value = '';
+    loadAdminImages();
+    
+  } catch (e) {
+    status.textContent = 'Ошибка: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+}
+
+function copyImageUrl(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    alert('URL скопирован в буфер обмена');
+  });
+}
 <script>
 // =====================================================================
 // КОНФИГУРАЦИЯ — ЗАМЕНИТЕ НА СВОИ РЕАЛЬНЫЕ ДАННЫЕ ИЗ SUPABASE
@@ -646,6 +1353,92 @@ function setDebug(status, text) {
   dot.className = 'dot ' + (status === 'connected' ? 'green' : status === 'error' ? 'red' : 'yellow');
   txt.textContent = text;
 }
+
+  // ====== GAME DETAIL PAGE ======
+function showGameDetail(id) {
+  const g = allLoadedGames.find(x => String(x.id) === String(id));
+  if (!g) return;
+  
+  document.getElementById('main-view').style.display = 'none';
+  document.getElementById('profile-view').style.display = 'none';
+  document.getElementById('game-detail-view').style.display = 'block';
+  
+  // Обложка
+  const cover = document.getElementById('gdCover');
+  if (g.cover_image_url) {
+    cover.style.backgroundImage = `url('${g.cover_image_url}')`;
+  } else {
+    cover.style.background = 'linear-gradient(135deg, #1a1a3e 0%, #2c1f4a 100%)';
+  }
+  
+  // Инфо
+  document.getElementById('gdTitle').textContent = g.title || typeLabel(g.game_type);
+  document.getElementById('gdTime').textContent = formatRange(g.start_at, g.end_at);
+  document.getElementById('gdPrice').textContent = g.price + '₽';
+  document.getElementById('gdLocation').textContent = g.location || '';
+  
+  // Ведущие
+  let hostsHTML = `
+    <div class="game-detail-host">
+      <div class="photo">${girlAvatar(7)}</div>
+      <div><div class="name">${g.host_name || 'Ведущий'}</div><div class="role">${g.host_role || 'мастер'}</div></div>
+    </div>
+  `;
+  if (g.organizer_name) {
+    hostsHTML += `
+      <div class="game-detail-host">
+        <div class="photo">${girlAvatar(8)}</div>
+        <div><div class="name">${g.organizer_name}</div><div class="role">${g.organizer_role || 'организатор'}</div></div>
+      </div>
+    `;
+  }
+  document.getElementById('gdHosts').innerHTML = hostsHTML;
+  
+  // Участники
+  const confirmed = (g.registrations || []).filter(r => r.status === 'confirmed');
+  document.getElementById('gdPlayersCount').textContent = confirmed.length;
+  document.getElementById('gdPlayersMax').textContent = g.max_seats;
+  
+  // Демо-данные участников
+  const demoPlayers = [
+    { name: 'Швед Ренессанс', title: 'принц Англии', badge: 'veteran', games: 14, wins: 5 },
+    { name: 'Таисия Актриса', title: 'Королева Англии', badge: 'star', games: 3, wins: 0 },
+    { name: 'Нина', title: 'Нилетто', badge: 'newbie', games: 17, wins: 2 },
+    { name: 'Артем', title: 'Артемщик', badge: 'master', games: 8, wins: 4 },
+    { name: 'Никита Заяц', title: 'Ебака Грозный', badge: 'newbie', games: 5, wins: 1 },
+  ];
+  
+  const playersHTML = demoPlayers.slice(0, confirmed.length || 5).map((p, i) => `
+    <div class="player-row">
+      <div class="photo">
+        ${girlAvatar(i)}
+        <span class="player-badge ${p.badge}">${
+          p.badge === 'veteran' ? 'ветеран' : 
+          p.badge === 'star' ? 'звезда' : 
+          p.badge === 'master' ? 'мэтр' : 'новичок'
+        }</span>
+      </div>
+      <div class="info">
+        <div class="name">${p.name}</div>
+        <div class="title">${p.title}</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-num">${p.games}</div><div class="stat-label">игр</div></div>
+        <div class="stat"><div class="stat-num">${p.wins}</div><div class="stat-label">побед</div></div>
+      </div>
+    </div>
+  `).join('');
+  
+  document.getElementById('gdPlayersList').innerHTML = playersHTML;
+  
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Обновите функции карточек - добавьте onclick
+// Замените в heroCardHTML, simpleCardHTML, largeCardHTML:
+// onclick="openModal('${g.id}')"
+// на:
+// onclick="showGameDetail('${g.id}')"
 
 // ====== INIT SUPABASE ======
 async function initSupabase() {
@@ -857,7 +1650,7 @@ function dotsRowHTML(going, total) {
 function countConfirmed(regs) { return (regs || []).filter(r => r.status === 'confirmed').length; }
 
 function heroCardHTML(g, going) {
-  return `<article class="card-hero" onclick="openModal('${g.id}')">
+  return `<article class="card-hero" onclick="showGameDetail('${g.id}')">
     <div class="cover" style="background-image: url('${g.cover_image_url}'); background-color: #1a1410;">
       <div class="cover-title"><h3>${g.title}</h3>${g.subtitle ? `<p>${g.subtitle}</p>` : ''}</div>
     </div>
@@ -882,7 +1675,7 @@ function heroCardHTML(g, going) {
 }
 
 function simpleCardHTML(g, going) {
-  return `<article class="card-simple" onclick="openModal('${g.id}')">
+  return `<article class="card-simple" onclick="showGameDetail('${g.id}')">
     <div class="card-top">
       <div>
         <div class="card-name">${typeLabel(g.game_type)}</div>
@@ -904,12 +1697,12 @@ function simpleCardHTML(g, going) {
 function largeCardHTML(g, going) {
   const topBrand = g.topBrand ? `<div class="card-badge-top"><div class="badge-top-brand">TOP<br>BRAND</div></div>` : '';
   const heart = g.likes ? `<div class="card-heart"><svg viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${g.likes}</div>` : '';
-  return `<article class="card-large" onclick="openModal('${g.id}')">
+  return `<article class="card-large" onclick="showGameDetail('${g.id}')">
     <div class="cover" style="background-image: url('${g.cover_image_url}'); background-color: #1a1410;">
       ${topBrand}${heart}
       <div class="cover-title"><h3>${g.title}</h3>${g.subtitle ? `<p>${g.subtitle}</p>` : ''}</div>
     </div>
-    <div class="info">
+    <div class="info">d
       <div class="card-top">
         <div>
           <div class="card-name">${typeLabel(g.game_type)}</div>
@@ -1251,5 +2044,113 @@ function renderAbout() {
   await loadGames();
 })();
 </script>
+  <!-- ============ ADMIN PANEL ============ -->
+<section id="admin-view" class="admin-view">
+  <div class="admin-header">
+    <h1>Админ-панель</h1>
+    <button onclick="closeAdmin()">Выйти</button>
+  </div>
+  
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchAdminTab('games')">Игры</button>
+    <button class="admin-tab" onclick="switchAdminTab('hosts')">Ведущие</button>
+    <button class="admin-tab" onclick="switchAdminTab('images')">Картинки</button>
+  </div>
+
+  <!-- TAB: Игры -->
+  <div id="admin-games" class="admin-tab-content">
+    <button class="btn-primary" onclick="showGameForm()">+ Добавить игру</button>
+    <div id="adminGamesList" class="admin-list"></div>
+  </div>
+
+  <!-- TAB: Ведущие -->
+  <div id="admin-hosts" class="admin-tab-content" style="display:none;">
+    <button class="btn-primary" onclick="showHostForm()">+ Добавить ведущего</button>
+    <div id="adminHostsList" class="admin-list"></div>
+  </div>
+
+  <!-- TAB: Картинки -->
+  <div id="admin-images" class="admin-tab-content" style="display:none;">
+    <div class="admin-upload">
+      <h3>Загрузить картинку</h3>
+      <input type="file" id="adminImageFile" accept="image/*">
+      <button class="btn-primary" onclick="uploadImage()">Загрузить</button>
+      <div id="uploadStatus"></div>
+    </div>
+    <div id="adminImagesList" class="admin-images-grid"></div>
+  </div>
+</section>
+
+<!-- MODAL: Форма игры -->
+<div class="modal-bg" id="adminGameModal">
+  <div class="modal admin-modal">
+    <button class="modal-close" onclick="closeGameForm()">×</button>
+    <h2 id="gameFormTitle">Новая игра</h2>
+    <form id="gameForm" onsubmit="saveGame(event)">
+      <input type="hidden" id="gameId">
+      
+      <label>Название игры</label>
+      <input type="text" id="gameTitle" placeholder="Царский" required>
+      
+      <label>Подзаголовок</label>
+      <input type="text" id="gameSubtitle" placeholder="Великолепный праздник мафии">
+      
+      <label>Тип игры</label>
+      <select id="gameType" required>
+        <option value="city_mafia">Городская мафия</option>
+        <option value="sport_mafia">Спортивная мафия</option>
+        <option value="dice">Кубики</option>
+        <option value="other">Другое</option>
+      </select>
+      
+      <label>Дата и время начала</label>
+      <input type="datetime-local" id="gameStart" required>
+      
+      <label>Дата и время окончания</label>
+      <input type="datetime-local" id="gameEnd" required>
+      
+      <label>Адрес</label>
+      <input type="text" id="gameLocation" value="Библиотека (Большой Путинковский пер., 5, м. Пушкинская)">
+      
+      <label>Цена (₽)</label>
+      <input type="number" id="gamePrice" value="1500" required>
+      
+      <label>Макс. мест</label>
+      <input type="number" id="gameMaxSeats" value="10" required>
+      
+      <label>Ведущий</label>
+      <select id="gameHost"></select>
+      
+      <label>URL картинки (необязательно)</label>
+      <input type="text" id="gameCover" placeholder="https://...">
+      
+      <button type="submit" class="btn-primary">Сохранить</button>
+      <button type="button" class="btn-secondary" onclick="closeGameForm()">Отмена</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Форма ведущего -->
+<div class="modal-bg" id="adminHostModal">
+  <div class="modal admin-modal">
+    <button class="modal-close" onclick="closeHostForm()">×</button>
+    <h2 id="hostFormTitle">Новый ведущий</h2>
+    <form id="hostForm" onsubmit="saveHost(event)">
+      <input type="hidden" id="hostId">
+      
+      <label>Имя</label>
+      <input type="text" id="hostName" placeholder="Дядя Коля" required>
+      
+      <label>Роль</label>
+      <input type="text" id="hostRole" placeholder="мастер" required>
+      
+      <label>URL фото (необязательно)</label>
+      <input type="text" id="hostPhoto" placeholder="https://...">
+      
+      <button type="submit" class="btn-primary">Сохранить</button>
+      <button type="button" class="btn-secondary" onclick="closeHostForm()">Отмена</button>
+    </form>
+  </div>
+</div>
 </body>
 </html>
