@@ -528,6 +528,13 @@ footer .brand{font-weight:600;color:var(--txt2);font-size:14px;margin-bottom:6px
 </div>
 
 <script>
+  // Было — брало из отдельной таблицы hosts или не брало вообще
+const hostPhoto = game.host_photo_url;
+const organizerPhoto = game.organizer_photo_url;
+
+// В HTML/JSX
+<img src={hostPhoto} alt={game.host_name} />
+<img src={organizerPhoto} alt={game.organizer_name} />
 const SUPABASE_URL='https://fzkdgfsdjpaptmiwvjbe.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6a2RnZnNkanBhcHRtaXd2amJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ4OTAsImV4cCI6MjA5NDEwMDg5MH0.iL9c_CIyDGUQ_C0_-mKdlq8eG1FPUr-92HKaWCFcbrc';
 const ADMIN_PASS='mafia2026';
