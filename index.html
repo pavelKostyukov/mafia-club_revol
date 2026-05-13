@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Supabase JS подключаем сразу -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg: #eef2f7;
@@ -39,6 +41,25 @@ html, body {
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 a { color: inherit; text-decoration: none; }
 
+/* ============ DEBUG BANNER ============ */
+.debug-banner {
+  background: #fff3cd;
+  border-bottom: 2px solid #ffc107;
+  padding: 10px 22px;
+  font-size: 13px;
+  color: #856404;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.debug-banner.connected { background: #d4edda; border-color: #28a745; color: #155724; }
+.debug-banner.error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+.debug-banner .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.debug-banner .dot.yellow { background: #ffc107; }
+.debug-banner .dot.green { background: #28a745; }
+.debug-banner .dot.red { background: #dc3545; }
+
 /* ============ NAV ============ */
 .nav { background: transparent; border-bottom: 1px solid #dde3ea; }
 .nav-inner { max-width: 1200px; margin: 0 auto; padding: 18px 22px; display: flex; align-items: center; gap: 26px; }
@@ -65,6 +86,9 @@ a { color: inherit; text-decoration: none; }
 .date-pill.today { border-color: var(--blue); color: var(--blue); font-weight: 500; }
 .date-pill.active { background: var(--blue-bright); color: white; border-color: var(--blue-bright); font-weight: 500; }
 .date-pill.today.active { background: var(--blue); color: white; }
+/* Индикатор наличия игр */
+.date-pill .game-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; margin-left: 6px; vertical-align: middle; }
+.date-pill.active .game-dot { background: white; }
 
 /* ============ TAGS ============ */
 .tags-wrapper { border-bottom: 1px solid #dde3ea; background: var(--bg); }
@@ -237,6 +261,19 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
 
 .empty-state { text-align: center; padding: 60px 20px; color: #999; font-size: 14px; }
 
+/* ============ LOADING ============ */
+.loading-spinner { text-align: center; padding: 40px 20px; }
+.loading-spinner::after {
+  content: '';
+  display: inline-block;
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ============ PROFILE PAGE ============ */
 .profile-view { display: none; padding: 30px 22px 40px; max-width: 1100px; margin: 0 auto; }
 .profile-grid { display: grid; grid-template-columns: 200px 1fr 220px; gap: 30px; align-items: start; padding-bottom: 30px; }
@@ -335,6 +372,12 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
 </head>
 <body>
 
+<!-- ============ DEBUG BANNER ============ -->
+<div class="debug-banner" id="debugBanner">
+  <span class="dot yellow"></span>
+  <span id="debugText">Инициализация...</span>
+</div>
+
 <nav class="nav">
   <div class="nav-inner">
     <button class="burger" onclick="openDrawer()" aria-label="Меню">
@@ -369,61 +412,22 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
   <nav class="drawer-nav">
     <div class="drawer-section-title">Навигация</div>
     <a onclick="closeDrawer(); goHome()">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </span>
+      <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
       Клуб
     </a>
     <a onclick="closeDrawer(); goToSchedule()">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      </span>
+      <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
       Расписание
     </a>
-    <a class="disabled">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6-6 6 6"/><path d="M4 22h16"/><path d="M12 3v17"/></svg>
-      </span>
-      Турниры
-    </a>
-    <a class="disabled">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      </span>
-      Общение
-    </a>
-    <a class="disabled">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8M18 10h-8"/></svg>
-      </span>
-      Новости
-    </a>
+    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6-6 6 6"/><path d="M4 22h16"/><path d="M12 3v17"/></svg></span>Турниры</a>
+    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Общение</a>
+    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8M18 10h-8"/></svg></span>Новости</a>
     <div class="drawer-section-title">Профиль</div>
-    <a onclick="showProfile()">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </span>
-      Мой профиль
-    </a>
-    <a class="disabled">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      </span>
-      Мои записи
-    </a>
+    <a onclick="showProfile()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Мой профиль</a>
+    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Мои записи</a>
     <div class="drawer-section-title">Прочее</div>
-    <a onclick="closeDrawer(); goToAbout()">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      </span>
-      О клубе
-    </a>
-    <a onclick="closeDrawer(); goToContacts()">
-      <span class="icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-      </span>
-      Контакты
-    </a>
+    <a onclick="closeDrawer(); goToAbout()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>О клубе</a>
+    <a onclick="closeDrawer(); goToContacts()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>Контакты</a>
   </nav>
   <div class="drawer-footer">
     <button class="drawer-login-btn" onclick="alert('Скоро: вход через Telegram')">Войти</button>
@@ -441,17 +445,18 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
 </div>
 
 <div class="tags-wrapper">
-  <div class="tags-bar">
-    <button class="tag-pill active">Городская мафия</button>
-    <button class="tag-pill">Кубики</button>
-    <button class="tag-pill">Спортивная мафия</button>
-    <button class="tag-pill">Библиотека</button>
-    <button class="tag-pill">Друзья</button>
+  <div class="tags-bar" id="tagsBar">
+    <button class="tag-pill active" data-type="all" onclick="filterByTag(this, 'all')">Все</button>
+    <button class="tag-pill" data-type="city_mafia" onclick="filterByTag(this, 'city_mafia')">Городская мафия</button>
+    <button class="tag-pill" data-type="dice" onclick="filterByTag(this, 'dice')">Кубики</button>
+    <button class="tag-pill" data-type="sport_mafia" onclick="filterByTag(this, 'sport_mafia')">Спортивная мафия</button>
   </div>
 </div>
 
 <main id="schedule" style="padding-bottom: 24px;">
-  <div id="schedule-content"></div>
+  <div id="schedule-content">
+    <div class="loading-spinner"></div>
+  </div>
 </main>
 
 <section class="about-section">
@@ -479,14 +484,14 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
             <div class="role">Королева Англии</div>
           </div>
         </div>
-        <p>Основательница и бессменный лидер игрового клуба. С 2015 года прошла путь от яркого стримера до признанного визионера киберспорта. Обладая королевской харизмой и стратегическим мышлением, Таисия создала пространство, где талант и дисциплина превращаются в победы.</p>
+        <p>Основательница и бессменный лидер игрового клуба. С 2015 года прошла путь от яркого стримера до признанного визионера киберспорта.</p>
         <p class="motto">Её девиз: «Играть с достоинством — побеждать как королева».</p>
         <div class="about-team-row">
           <div class="person"><div class="photo" id="t1"></div><div class="name">Швед</div><div class="role">Принц Англии</div></div>
           <div class="person"><div class="photo" id="t2"></div><div class="name">Дядя Коля</div><div class="role">Кардинал Ришелье</div></div>
           <div class="person"><div class="photo" id="t3"></div><div class="name">Дядя Боря</div><div class="role">Люцифер</div></div>
         </div>
-        <p>Сплочённый отряд профессионалов. За шесть лет существования коллектив превратился в грозную силу российского и международного киберспорта.</p>
+        <p>Сплочённый отряд профессионалов.</p>
       </div>
     </div>
 
@@ -511,18 +516,11 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
     <div class="profile-left">
       <div class="profile-badge-block">
         <svg class="profile-badge-shield" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="shieldG" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#a02828"/>
-              <stop offset="100%" stop-color="#6b1818"/>
-            </linearGradient>
-          </defs>
+          <defs><linearGradient id="shieldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a02828"/><stop offset="100%" stop-color="#6b1818"/></linearGradient></defs>
           <path d="M4 8 L32 4 L60 8 L60 50 Q60 70 32 78 Q4 70 4 50 Z" fill="url(#shieldG)" stroke="#5b1414" stroke-width="1.5"/>
           <g transform="translate(32, 36)" fill="#f5b942">
             <path d="M-14 -6 L-8 -2 L-3 -10 L0 -2 L3 -10 L8 -2 L14 -6 L12 6 L-12 6 Z"/>
-            <circle cx="-10" cy="-6" r="2.5"/>
-            <circle cx="0" cy="-10" r="2.5"/>
-            <circle cx="10" cy="-6" r="2.5"/>
+            <circle cx="-10" cy="-6" r="2.5"/><circle cx="0" cy="-10" r="2.5"/><circle cx="10" cy="-6" r="2.5"/>
             <rect x="-13" y="8" width="26" height="2"/>
           </g>
         </svg>
@@ -541,21 +539,15 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
       </label>
       <div class="profile-medals">
         <div class="medal-item">
-          <div class="medal-icon medal-gold">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7z"/></svg>
-          </div>
+          <div class="medal-icon medal-gold"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7z"/></svg></div>
           <div class="medal-label">Чемпион 2026<br>Городская мафия</div>
         </div>
         <div class="medal-item">
-          <div class="medal-icon medal-green">
-            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r="6"/><path d="M8 14l-2 8 6-3 6 3-2-8z"/></svg>
-          </div>
+          <div class="medal-icon medal-green"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r="6"/><path d="M8 14l-2 8 6-3 6 3-2-8z"/></svg></div>
           <div class="medal-label">Чемпион 2026<br>Спортивная мафия</div>
         </div>
         <div class="medal-item">
-          <div class="medal-icon medal-pink">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg>
-          </div>
+          <div class="medal-icon medal-pink"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg></div>
           <div class="medal-label">Любимец<br>публики</div>
         </div>
       </div>
@@ -623,30 +615,75 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
     </div>
     <button class="btn-primary" id="bookBtn" disabled onclick="confirmBooking()">Записаться</button>
     <button class="btn-secondary" onclick="closeModal()">Возможно буду</button>
-    <p class="legal">Нажимая на кнопку, вы принимаете <a href="#">пользовательское соглашение</a> и даёте согласие на обработку персональных данных, а также соглашаетесь с <a href="#">политикой конфиденциальности</a></p>
+    <p class="legal">Нажимая на кнопку, вы принимаете <a href="#">пользовательское соглашение</a> и даёте согласие на обработку персональных данных</p>
   </div>
 </div>
 
 <script>
-const SUPABASE_URL = 'https://fzkdgfsdjpaptmiwvjbe.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_UwOw9jmfFtYbEfllerhT2Q_1FJqSVSc';  // длинная строка целиком
+// =====================================================================
+// КОНФИГУРАЦИЯ — ЗАМЕНИТЕ НА СВОИ РЕАЛЬНЫЕ ДАННЫЕ ИЗ SUPABASE
+// =====================================================================
+// Где взять:
+// 1. Зайдите в Supabase Dashboard → Settings → API
+// 2. Project URL — это SUPABASE_URL
+// 3. anon public key (начинается с eyJ...) — это SUPABASE_KEY
+// =====================================================================
 
-const DEMO_MODE = SUPABASE_URL.includes('fzkdgfsdjpaptmiwvjbe') || SUPABASE_KEY.includes('sb_publishable_UwOw9jmfFtYbEfllerhT2Q_1FJqSVSc');
-let supabase = null;
+const SUPABASE_URL = 'https://fzkdgfsdjpaptmiwvjbe.supabase.co';  // ← ваш URL
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6a2RnZnNkanBhcHRtaXd2amJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ4OTAsImV4cCI6MjA5NDEwMDg5MH0.iL9c_CIyDGUQ_C0_-mKdlq8eG1FPUr-92HKaWCFcbrc';  // ← ваш anon key
 
-// Подгружаем Supabase JS только если в реальном режиме
+// Автоопределение демо-режима: если ключ не заменён — работаем на демо-данных
+const DEMO_MODE = !SUPABASE_KEY.startsWith('eyJ') || SUPABASE_KEY.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6a2RnZnNkanBhcHRtaXd2amJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ4OTAsImV4cCI6MjA5NDEwMDg5MH0.iL9c_CIyDGUQ_C0_-mKdlq8eG1FPUr-92HKaWCFcbrc');
+
+let sb = null;  // Supabase client
+
+// ====== DEBUG BANNER ======
+function setDebug(status, text) {
+  const banner = document.getElementById('debugBanner');
+  const dot = banner.querySelector('.dot');
+  const txt = document.getElementById('debugText');
+  banner.className = 'debug-banner ' + status;
+  dot.className = 'dot ' + (status === 'connected' ? 'green' : status === 'error' ? 'red' : 'yellow');
+  txt.textContent = text;
+}
+
+// ====== INIT SUPABASE ======
 async function initSupabase() {
-  if (DEMO_MODE) return;
-  if (!window.supabase) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
+  if (DEMO_MODE) {
+    setDebug('', '⚠️ ДЕМО-РЕЖИМ — данные локальные. Замените SUPABASE_KEY на настоящий anon key (eyJ...)');
+    console.warn('DEMO MODE: Supabase key не настроен. Используются локальные демо-данные.');
+    console.warn('Чтобы подключить БД:');
+    console.warn('1. Supabase Dashboard → Settings → API');
+    console.warn('2. Скопируйте "anon public" ключ (начинается с eyJ...)');
+    console.warn('3. Вставьте его в SUPABASE_KEY в коде');
+    return;
   }
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  try {
+    setDebug('', 'Подключение к Supabase...');
+
+    if (typeof window.supabase === 'undefined') {
+      throw new Error('Supabase JS library не загрузилась. Проверьте интернет.');
+    }
+
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Тестовый запрос — проверяем что таблица games существует
+    const { data, error } = await sb.from('games').select('id').limit(1);
+
+    if (error) {
+      throw new Error(`Supabase ответил ошибкой: ${error.message} (code: ${error.code})`);
+    }
+
+    setDebug('connected', `✅ Supabase подключён! Найдено записей в games: проверка ОК`);
+    console.log('Supabase connected successfully. Test query returned:', data);
+
+  } catch (e) {
+    sb = null;
+    setDebug('error', `❌ Ошибка подключения: ${e.message}`);
+    console.error('Supabase init error:', e);
+    console.error('Переключаемся на демо-данные');
+  }
 }
 
 // ====== УТИЛИТЫ ======
@@ -656,7 +693,7 @@ function formatDateLabel(d) { return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${
 function isSameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
 function formatTime(iso) { const d = new Date(iso); return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }
 function formatRange(s, e) { return `${formatTime(s)} — ${formatTime(e)}`; }
-function typeLabel(t) { return { city_mafia: 'Городская мафия', sport_mafia: 'Спортивная мафия', dice: 'Кубики', other: 'Игра' }[t] || 'Игра'; }
+function typeLabel(t) { return { city_mafia: 'Городская мафия', sport_mafia: 'Спортивная мафия', dice: 'Кубики', other: 'Игра' }[t] || t || 'Игра'; }
 
 // ====== АВАТАРКИ ======
 function girlAvatar(seed = 0) {
@@ -695,10 +732,19 @@ function renderDates() {
 function shiftDates(dir) { firstVisibleOffset += dir * VISIBLE_COUNT; renderDates(); }
 function selectDate(offset) { activeOffset = offset; renderDates(); loadGames(); }
 
-// ====== ДЕМО-ДАННЫЕ (разные игры на разные даты — реальный фильтр по календарю) ======
+// ====== ФИЛЬТР ПО ТЕГАМ ======
+let activeTagFilter = 'all';
+function filterByTag(el, type) {
+  activeTagFilter = type;
+  document.querySelectorAll('.tag-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderFilteredGames();
+}
+
+// ====== ДЕМО-ДАННЫЕ ======
 function buildDemoGames(date) {
   const offset = Math.round((date - today) / 86400000);
-  const idx = ((offset % 7) + 7) % 7;  // циклическая неделя, чтобы при прокрутке всегда было что-то
+  const idx = ((offset % 7) + 7) % 7;
   const d = (h, m, plusDay = 0) => {
     const x = new Date(date);
     x.setDate(x.getDate() + plusDay);
@@ -713,71 +759,80 @@ function buildDemoGames(date) {
     start_at: d(19, 0), end_at: d(22, 0),
     location: lib, price: 1500, max_seats: 10,
     host_name: 'Дядя Коля', host_role: 'мастер',
+    organizer_name: null, organizer_role: null,
     registrations: [],
     ...overrides
   });
 
-  // Понедельник — большой вечер: Царский + 2 простые + 3 кубика + Легендарити
   if (idx === 0) return [
     mk({ id: 'tsar', title: 'Царский', subtitle: 'Великолепный праздник мафии от дяди Бори и дяди Коли', cover_image_url: 'card-tsarsky.png', start_at: d(19, 0), end_at: d(23, 45), price: 5500, max_seats: 15, registrations: Array(15).fill({status:'confirmed'}) }),
     mk({ id: 'gm', start_at: d(19, 0), end_at: d(22, 0), price: 1500, max_seats: 12, registrations: Array(10).fill({status:'confirmed'}) }),
     mk({ id: 'cub1', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), price: 300, max_seats: 6, registrations: Array(1).fill({status:'confirmed'}) }),
     mk({ id: 'cub2', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), price: 300, max_seats: 6, registrations: Array(1).fill({status:'confirmed'}) }),
     mk({ id: 'cub3', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), price: 300, max_seats: 6, registrations: [] }),
-    mk({ id: 'leg', title: 'Легендарити', subtitle: 'Великолепный праздник мафии от дяди Бори и дяди Коли', cover_image_url: 'card-legendary.png', start_at: d(22, 0), end_at: d(2, 30, 1), price: 5500, max_seats: 16, host_role: 'ведущий', organizer_name: 'Дядя Боря', organizer_role: 'организатор', topBrand: true, likes: 5, registrations: Array(14).fill({status:'confirmed'}) }),
+    mk({ id: 'leg', title: 'Легендарити', subtitle: 'Великолепный праздник мафии', cover_image_url: 'card-legendary.png', start_at: d(22, 0), end_at: d(2, 30, 1), price: 5500, max_seats: 16, host_role: 'ведущий', organizer_name: 'Дядя Боря', organizer_role: 'организатор', topBrand: true, likes: 5, registrations: Array(14).fill({status:'confirmed'}) }),
   ];
-
-  // Вторник — спортивная мафия + городская
   if (idx === 1) return [
     mk({ id: 'sm', title: 'Спортивная мафия', game_type: 'sport_mafia', start_at: d(19, 0), end_at: d(23, 0), price: 1800, max_seats: 10, host_name: 'Артём', registrations: Array(5).fill({status:'confirmed'}) }),
     mk({ id: 'gm', start_at: d(20, 0), end_at: d(23, 30), host_name: 'Дядя Боря', host_role: 'ведущий', max_seats: 12, registrations: Array(4).fill({status:'confirmed'}) }),
   ];
-
-  // Среда — турнирный отбор
   if (idx === 2) return [
     mk({ id: 'tour', title: 'Турнирная мафия', subtitle: 'Отборочный этап', game_type: 'sport_mafia', start_at: d(19, 0), end_at: d(23, 0), price: 2500, max_seats: 10, host_name: 'Артём', registrations: Array(7).fill({status:'confirmed'}) }),
   ];
-
-  // Четверг — вечер кубиков
   if (idx === 3) return [
     mk({ id: 'cub1', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), end_at: d(22, 30), price: 300, max_seats: 6, registrations: Array(2).fill({status:'confirmed'}) }),
     mk({ id: 'cub2', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), end_at: d(22, 30), price: 300, max_seats: 6, registrations: Array(1).fill({status:'confirmed'}) }),
   ];
-
-  // Пятница — большой формат
   if (idx === 4) return [
-    mk({ id: 'tsar', title: 'Царский', subtitle: 'Великолепный праздник мафии', cover_image_url: 'card-tsarsky.png', start_at: d(19, 0), end_at: d(23, 45), price: 5500, max_seats: 14, host_name: 'Дядя Боря', host_role: 'ведущий', registrations: Array(3).fill({status:'confirmed'}) }),
+    mk({ id: 'tsar', title: 'Царский', subtitle: 'Великолепный празд��ик мафии', cover_image_url: 'card-tsarsky.png', start_at: d(19, 0), end_at: d(23, 45), price: 5500, max_seats: 14, host_name: 'Дядя Боря', host_role: 'ведущий', registrations: Array(3).fill({status:'confirmed'}) }),
     mk({ id: 'gm', start_at: d(20, 0), end_at: d(22, 0), max_seats: 10, registrations: [] }),
   ];
-
-  // Суббота — выходной
   if (idx === 5) return [];
-
-  // Воскресенье — закрытая игра
   if (idx === 6) return [
     mk({ id: 'rauf', title: 'Светский раут', subtitle: 'Особый вечер для постоянных гостей', start_at: d(20, 0), end_at: d(0, 30, 1), price: 3000, max_seats: 12, registrations: Array(8).fill({status:'confirmed'}) }),
   ];
-
   return [];
 }
 
-async function fetchGames(date) {
-  if (DEMO_MODE) return buildDemoGames(date);
+// ====== ЗАГРУЗКА ИГР ИЗ SUPABASE ======
+async function fetchGamesFromDB(date) {
+  if (!sb) return null;  // null = нет подключения, используем демо
+
   try {
-    const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
-    const dayEnd = new Date(date); dayEnd.setHours(23,59,59,999);
-    const { data, error } = await supabase
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    console.log(`Fetching games for ${dayStart.toISOString()} — ${dayEnd.toISOString()}`);
+
+    const { data, error } = await sb
       .from('games')
-      .select(`*, registrations:registrations(id, seat_number, status, player_name)`)
+      .select(`
+        *,
+        registrations (
+          id,
+          seat_number,
+          status,
+          player_name
+        )
+      `)
       .gte('start_at', dayStart.toISOString())
       .lte('start_at', dayEnd.toISOString())
-      .eq('status', 'scheduled')
       .order('start_at');
-    if (error) { console.error(error); return []; }
+
+    if (error) {
+      console.error('Supabase query error:', error);
+      setDebug('error', `Ошибка запроса: ${error.message}`);
+      return null;
+    }
+
+    console.log(`Loaded ${(data || []).length} games from Supabase:`, data);
     return data || [];
+
   } catch (e) {
-    console.error('fetchGames error:', e);
-    return [];
+    console.error('fetchGamesFromDB error:', e);
+    return null;
   }
 }
 
@@ -811,13 +866,13 @@ function heroCardHTML(g, going) {
         <div>
           <div class="card-name">${typeLabel(g.game_type)}</div>
           <div class="card-time">${formatRange(g.start_at, g.end_at)}</div>
-          <div class="card-loc">${g.location}</div>
+          <div class="card-loc">${g.location || ''}</div>
         </div>
         <div class="card-price">${g.price} ₽</div>
       </div>
       <div class="card-host">
         <div class="host-mini">${girlAvatar(7)}</div>
-        <div class="host-meta"><div class="name">${g.host_name}</div><div class="role">${g.host_role || 'ведущий'}</div></div>
+        <div class="host-meta"><div class="name">${g.host_name || ''}</div><div class="role">${g.host_role || 'ведущий'}</div></div>
       </div>
       <div class="card-going-label">Идут ${going}/${g.max_seats}</div>
       <div class="players-grid">${playersGridHTML(going, g.max_seats)}</div>
@@ -825,25 +880,27 @@ function heroCardHTML(g, going) {
     </div>
   </article>`;
 }
+
 function simpleCardHTML(g, going) {
   return `<article class="card-simple" onclick="openModal('${g.id}')">
     <div class="card-top">
       <div>
         <div class="card-name">${typeLabel(g.game_type)}</div>
         <div class="card-time">${formatRange(g.start_at, g.end_at)}</div>
-        <div class="card-loc">${g.location}</div>
+        <div class="card-loc">${g.location || ''}</div>
       </div>
       <div class="card-price">${g.price} ₽</div>
     </div>
     <div class="card-host">
       <div class="host-mini">${girlAvatar(7)}</div>
-      <div class="host-meta"><div class="name">${g.host_name}</div><div class="role">${g.host_role || 'ведущий'}</div></div>
+      <div class="host-meta"><div class="name">${g.host_name || ''}</div><div class="role">${g.host_role || 'ведущий'}</div></div>
     </div>
-    <div class="card-going-label">Идут</div>
+    <div class="card-going-label">Идут ${going}/${g.max_seats}</div>
     <div class="dots-row">${dotsRowHTML(going, g.max_seats)}</div>
     <div class="card-bottom"><span class="maybe-label">Возможно буду</span><button class="plus-btn" onclick="event.stopPropagation(); openModal('${g.id}')">+</button></div>
   </article>`;
 }
+
 function largeCardHTML(g, going) {
   const topBrand = g.topBrand ? `<div class="card-badge-top"><div class="badge-top-brand">TOP<br>BRAND</div></div>` : '';
   const heart = g.likes ? `<div class="card-heart"><svg viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${g.likes}</div>` : '';
@@ -857,15 +914,15 @@ function largeCardHTML(g, going) {
         <div>
           <div class="card-name">${typeLabel(g.game_type)}</div>
           <div class="card-time">${formatRange(g.start_at, g.end_at)}</div>
-          <div class="card-loc">${g.location}</div>
+          <div class="card-loc">${g.location || ''}</div>
         </div>
         <div class="card-price">${g.price} ₽</div>
       </div>
       <div class="hosts-block">
-        <div class="card-host" style="margin-top:0;"><div class="host-mini">${girlAvatar(7)}</div><div class="host-meta"><div class="name">${g.host_name}</div><div class="role">${g.host_role || 'ведущий'}</div></div></div>
+        <div class="card-host" style="margin-top:0;"><div class="host-mini">${girlAvatar(7)}</div><div class="host-meta"><div class="name">${g.host_name || ''}</div><div class="role">${g.host_role || 'ведущий'}</div></div></div>
         ${g.organizer_name ? `<div class="card-host" style="margin-top:0;"><div class="host-mini">${girlAvatar(8)}</div><div class="host-meta"><div class="name">${g.organizer_name}</div><div class="role">${g.organizer_role || 'организатор'}</div></div></div>` : ''}
       </div>
-      <div class="card-going-label">Идут</div>
+      <div class="card-going-label">Идут ${going}/${g.max_seats}</div>
       <div class="players-grid">${playersGridHTML(going, g.max_seats)}</div>
       <div class="card-bottom"><span class="maybe-label">Возможно буду</span><button class="plus-btn" onclick="event.stopPropagation(); openModal('${g.id}')">+</button></div>
     </div>
@@ -873,77 +930,121 @@ function largeCardHTML(g, going) {
 }
 
 let allLoadedGames = [];
-async function loadGames() {
-  const d = new Date(today); d.setDate(today.getDate() + activeOffset);
+
+function renderFilteredGames() {
   const root = document.getElementById('schedule-content');
+  let list = allLoadedGames;
+
+  // Фильтр по тегу
+  if (activeTagFilter !== 'all') {
+    list = list.filter(g => g.game_type === activeTagFilter);
+  }
+
+  if (!list.length) {
+    root.innerHTML = allLoadedGames.length
+      ? `<div class="empty-state">Нет игр выбранного типа на этот день</div>`
+      : `<div class="empty-state">На этот день игр пока нет</div>`;
+    return;
+  }
+
+  // Группируем по времени начала
+  const byTime = {};
+  for (const g of list) {
+    const t = formatTime(g.start_at);
+    if (!byTime[t]) byTime[t] = [];
+    byTime[t].push(g);
+  }
+
+  let html = '';
+  for (const [time, games] of Object.entries(byTime)) {
+    html += `<div class="time-label">${time}</div>`;
+    const single = games.length === 1 && games[0].cover_image_url;
+    if (single) {
+      const g = games[0];
+      html += largeCardHTML(g, countConfirmed(g.registrations));
+    } else {
+      html += `<div class="games-row">`;
+      games.forEach((g, idx) => {
+        const going = countConfirmed(g.registrations);
+        if (g.cover_image_url && idx === 0) html += heroCardHTML(g, going);
+        else html += simpleCardHTML(g, going);
+      });
+      html += `</div>`;
+    }
+  }
+  root.innerHTML = html;
+}
+
+async function loadGames() {
+  const d = new Date(today);
+  d.setDate(today.getDate() + activeOffset);
+  const root = document.getElementById('schedule-content');
+  root.innerHTML = '<div class="loading-spinner"></div>';
+
   try {
-    const list = await fetchGames(d);
-    allLoadedGames = list;
-    if (!list.length) {
-      root.innerHTML = `<div class="empty-state">На этот день игр пока нет</div>`;
-      return;
-    }
-    // Группируем по времени начала
-    const byTime = {};
-    for (const g of list) {
-      const t = formatTime(g.start_at);
-      if (!byTime[t]) byTime[t] = [];
-      byTime[t].push(g);
-    }
-    let html = '';
-    for (const [time, games] of Object.entries(byTime)) {
-      html += `<div class="time-label">${time}</div>`;
-      const single = games.length === 1 && games[0].cover_image_url;
-      if (single) {
-        const g = games[0];
-        html += largeCardHTML(g, countConfirmed(g.registrations));
-      } else {
-        html += `<div class="games-row">`;
-        games.forEach((g, idx) => {
-          const going = countConfirmed(g.registrations);
-          if (g.cover_image_url && idx === 0) html += heroCardHTML(g, going);
-          else html += simpleCardHTML(g, going);
-        });
-        html += `</div>`;
+    // Пробуем загрузить из Supabase
+    let list = await fetchGamesFromDB(d);
+
+    // Если нет подключения — используем демо
+    if (list === null) {
+      list = buildDemoGames(d);
+      if (!DEMO_MODE) {
+        console.warn('Fallback to demo data due to DB error');
       }
     }
-    root.innerHTML = html;
+
+    allLoadedGames = list;
+    renderFilteredGames();
+
   } catch (e) {
     console.error('loadGames error:', e);
-    root.innerHTML = `<div class="empty-state">Не удалось загрузить расписание. Откройте консоль (F12) — там должна быть ошибка.</div>`;
+    // Fallback на демо
+    allLoadedGames = buildDemoGames(d);
+    renderFilteredGames();
   }
 }
 
 // ====== МОДАЛКА ======
 let activeGame = null;
 let selectedSeat = null;
+
 async function openModal(id) {
-  const g = allLoadedGames.find(x => x.id === id);
-  if (!g) return;
-  activeGame = g; selectedSeat = null;
-  document.getElementById('mTitle').textContent = typeLabel(g.game_type);
-  const d = new Date(g.start_at);
-  document.getElementById('mMeta').textContent = `${formatDateLabel(d)} · ${formatRange(g.start_at, g.end_at)}`;
+  const g = allLoadedGames.find(x => String(x.id) === String(id));
+  if (!g) { console.warn('Game not found:', id); return; }
+  activeGame = g;
+  selectedSeat = null;
+  document.getElementById('mTitle').textContent = g.title || typeLabel(g.game_type);
+  const dt = new Date(g.start_at);
+  document.getElementById('mMeta').textContent = `${formatDateLabel(dt)} · ${formatRange(g.start_at, g.end_at)}`;
   document.getElementById('bookBtn').disabled = true;
   document.getElementById('bookBtn').textContent = 'Записаться';
   renderSeats(g);
   document.getElementById('modalBg').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
+
 function closeModal() {
   document.getElementById('modalBg').classList.remove('open');
   document.body.style.overflow = '';
 }
+
 function renderSeats(g) {
   const wrap = document.getElementById('tableWrap');
   wrap.querySelectorAll('.seat').forEach(s => s.remove());
   const total = g.max_seats;
-  const takenSet = new Set((g.registrations || []).filter(r => r.status === 'confirmed' && r.seat_number).map(r => r.seat_number));
+  const takenSet = new Set(
+    (g.registrations || [])
+      .filter(r => r.status === 'confirmed' && r.seat_number)
+      .map(r => r.seat_number)
+  );
+
+  // Если нет seat_number в данных — имитируем занятые места
   if (takenSet.size === 0) {
     const going = countConfirmed(g.registrations);
     const sample = [2, 9, 10, 12, 1, 4, 5, 7, 8, 11, 13, 14, 6, 3, 15, 16];
     for (let i = 0; i < going && i < sample.length; i++) takenSet.add(sample[i]);
   }
+
   const radius = 108, cx = 135, cy = 135;
   for (let i = 1; i <= total; i++) {
     const angle = (-Math.PI / 2) + ((i - 1) / total) * Math.PI * 2;
@@ -959,6 +1060,7 @@ function renderSeats(g) {
     wrap.appendChild(seat);
   }
 }
+
 function selectSeat(num, el) {
   selectedSeat = num;
   document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
@@ -966,32 +1068,61 @@ function selectSeat(num, el) {
   document.getElementById('bookBtn').disabled = false;
   document.getElementById('bookBtn').textContent = `Записаться на место ${num}`;
 }
+
 async function confirmBooking() {
   if (!selectedSeat || !activeGame) return;
   const name = document.getElementById('mName').value.trim();
   const phone = document.getElementById('mPhone').value.trim();
   if (!name || !phone) { alert('Заполните имя и телефон'); return; }
-  if (DEMO_MODE) {
-    document.getElementById('bookBtn').textContent = '✓ Записан (демо)';
-    document.getElementById('bookBtn').disabled = true;
-    setTimeout(closeModal, 800);
+
+  const btn = document.getElementById('bookBtn');
+  btn.disabled = true;
+  btn.textContent = 'Записываем...';
+
+  // Если нет подключения к БД — демо-режим
+  if (!sb) {
+    setTimeout(() => {
+      btn.textContent = '✓ Записан (демо)';
+      setTimeout(closeModal, 800);
+    }, 500);
     return;
   }
+
   try {
-    const { error } = await supabase.from('registrations').insert({
-      game_id: activeGame.id, player_name: name, player_phone: phone,
-      seat_number: selectedSeat, status: 'confirmed'
+    const { error } = await sb.from('registrations').insert({
+      game_id: activeGame.id,
+      player_name: name,
+      player_phone: phone,
+      seat_number: selectedSeat,
+      status: 'confirmed'
     });
+
     if (error) {
-      if (error.code === '23505') alert('Это место только что заняли. Выберите другое.');
-      else alert('Ошибка: ' + error.message);
+      if (error.code === '23505') {
+        alert('Это место только что заняли. Выберите другое.');
+        btn.disabled = false;
+        btn.textContent = 'Записаться';
+      } else {
+        alert('Ошибка: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = 'Записаться';
+      }
       return;
     }
-    document.getElementById('bookBtn').textContent = '✓ Записан';
-    document.getElementById('bookBtn').disabled = true;
-    setTimeout(() => { closeModal(); loadGames(); }, 800);
-  } catch (e) { alert('Ошибка соединения: ' + e.message); }
+
+    btn.textContent = '✓ Записан!';
+    setTimeout(() => {
+      closeModal();
+      loadGames();  // Перезагружаем данные
+    }, 800);
+
+  } catch (e) {
+    alert('Ошибка соединения: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Записаться';
+  }
 }
+
 document.getElementById('modalBg').addEventListener('click', e => {
   if (e.target === document.getElementById('modalBg')) closeModal();
 });
@@ -1010,16 +1141,9 @@ function closeDrawer() {
 
 // ====== PROFILE ======
 const DEFAULT_PROFILE = {
-  name: 'Всеволод',
-  title: 'Мистер Икс',
-  star: 'звезда',
-  badge: 'Цари',
+  name: 'Всеволод', title: 'Мистер Икс', star: 'звезда', badge: 'Цари',
   avatar_url: 'avatar-vsevolod.png',
-  stats: {
-    cm: { games: 15, wins: 10 },
-    sm: { games: 55, wins: 32 },
-    d:  { games: 2, wins: 0 }
-  }
+  stats: { cm: { games: 15, wins: 10 }, sm: { games: 55, wins: 32 }, d: { games: 2, wins: 0 } }
 };
 
 function loadProfile() {
@@ -1045,13 +1169,12 @@ function renderProfile() {
   document.getElementById('pf-sm-wins').textContent = p.stats.sm.wins;
   document.getElementById('pf-d-games').textContent = p.stats.d.games;
   document.getElementById('pf-d-wins').textContent = p.stats.d.wins;
-  // Также обновляем аватарку в навбаре
-  document.getElementById('navAvatar').innerHTML = `<img src="${p.avatar_url}" alt="">`;
-  document.getElementById('drawerAvatar').innerHTML = `<img src="${p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;">`;
+  document.getElementById('navAvatar').innerHTML = `<img src="${p.avatar_url}" alt="" onerror="this.parentElement.innerHTML='${girlAvatar(0).replace(/'/g, "\\'")}'">`;
+  document.getElementById('drawerAvatar').innerHTML = `<img src="${p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${girlAvatar(0).replace(/'/g, "\\'")}'">`;
 }
 function editProfileField(field) {
   const p = loadProfile();
-  const labels = { name: 'Имя', title: 'Звание (например: Мистер Икс)', star: 'Статус (например: звезда)' };
+  const labels = { name: 'Имя', title: 'Звание', star: 'Статус' };
   const newVal = prompt(labels[field] + ':', p[field]);
   if (newVal !== null && newVal.trim()) {
     p[field] = newVal.trim();
@@ -1062,11 +1185,11 @@ function editProfileField(field) {
 function onAvatarUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { alert('Файл больше 2 МБ — выберите поменьше.'); return; }
+  if (file.size > 2 * 1024 * 1024) { alert('Файл больше 2 МБ'); return; }
   const reader = new FileReader();
   reader.onload = e => {
     const p = loadProfile();
-    p.avatar_url = e.target.result;  // data URL — сохраняем прямо в браузере
+    p.avatar_url = e.target.result;
     saveProfile(p);
     renderProfile();
   };
@@ -1084,30 +1207,10 @@ function showMainView() {
   document.getElementById('main-view').style.display = '';
   document.getElementById('profile-view').style.display = 'none';
 }
-// Возвращаемся к main-view и скроллим в нужное место
-function goHome() {
-  showMainView();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-function goToSchedule() {
-  showMainView();
-  // ждём кадр чтобы main-view стал видимым, потом скроллим
-  requestAnimationFrame(() => {
-    document.querySelector('.dates-wrapper').scrollIntoView({ behavior: 'smooth' });
-  });
-}
-function goToAbout() {
-  showMainView();
-  requestAnimationFrame(() => {
-    document.querySelector('.about-section').scrollIntoView({ behavior: 'smooth' });
-  });
-}
-function goToContacts() {
-  showMainView();
-  requestAnimationFrame(() => {
-    document.querySelector('footer').scrollIntoView({ behavior: 'smooth' });
-  });
-}
+function goHome() { showMainView(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function goToSchedule() { showMainView(); requestAnimationFrame(() => { document.querySelector('.dates-wrapper').scrollIntoView({ behavior: 'smooth' }); }); }
+function goToAbout() { showMainView(); requestAnimationFrame(() => { document.querySelector('.about-section').scrollIntoView({ behavior: 'smooth' }); }); }
+function goToContacts() { showMainView(); requestAnimationFrame(() => { document.querySelector('footer').scrollIntoView({ behavior: 'smooth' }); }); }
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeDrawer(); closeModal(); }
@@ -1131,8 +1234,8 @@ function renderAbout() {
     `<div class="host-card"><div class="photo">${girlAvatar(i)}</div><div class="name">${h.name}</div><div class="role">${h.role}</div></div>`
   ).join('');
   const reviews = [
-    { name: 'Алексей', role: 'Игрок', text: 'Невероятная атмосфера, ведущие на высшем уровне. Возвращаюсь каждый вечер.' },
-    { name: 'Мария', role: 'Игрок', text: 'Пришла впервые — осталась навсегда. Дружелюбная компания, отличная организация.' },
+    { name: 'Алексей', role: 'Игрок', text: 'Невероятная атмосфера, ведущие на высшем уровне.' },
+    { name: 'Мария', role: 'Игрок', text: 'Пришла впервые — осталась навсегда.' },
   ];
   document.getElementById('reviewsList').innerHTML = reviews.map((r, i) =>
     `<div class="review-card"><div class="photo">${girlAvatar(i+4)}</div><div><div class="name">${r.name}</div><div class="role">${r.role}</div><div class="text">${r.text}</div></div></div>`
@@ -1144,8 +1247,8 @@ function renderAbout() {
   renderAbout();
   renderProfile();
   renderDates();
-  await initSupabase();  // не падает в DEMO_MODE
-  loadGames();
+  await initSupabase();
+  await loadGames();
 })();
 </script>
 </body>
