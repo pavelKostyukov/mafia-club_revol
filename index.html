@@ -629,14 +629,13 @@ footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size
 // 3. anon public key (начинается с eyJ...) — это SUPABASE_KEY
 // =====================================================================
 
-const SUPABASE_URL = 'https://fzkdgfsdjpaptmiwvjbe.supabase.co';  // ← ваш URL
-const SUPABASE_KEY = 'sb_publishable_UwOw9jmfFtYbEfllerhT2Q_1FJqSVSc';  // ← ваш anon key
+const SUPABASE_URL = 'https://fzkdgfsdjpaptmiwvjbe.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6a2RnZnNkanBhcHRtaXd2amJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ4OTAsImV4cCI6MjA5NDEwMDg5MH0.iL9c_CIyDGUQ_C0_-mKdlq8eG1FPUr-92HKaWCFcbrc';
 
-  //eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6a2RnZnNkanBhcHRtaXd2amJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ4OTAsImV4cCI6MjA5NDEwMDg5MH0.iL9c_CIyDGUQ_C0_-mKdlq8eG1FPUr-92HKaWCFcbrc
 // Автоопределение демо-режима: если ключ не заменён — работаем на демо-данных
-const DEMO_MODE = !SUPABASE_KEY.startsWith('sb_publishable_UwOw9jmfFtYbEfllerhT2Q_1FJqSVSc') || SUPABASE_KEY.includes('sb_publishable_UwOw9jmfFtYbEfllerhT2Q_1FJqSVSc');
+const DEMO_MODE = !SUPABASE_KEY.startsWith('eyJ') || SUPABASE_KEY === 'SUPABASE_KEY';
 
-let sb = null;  // Supabase client
+let sb = null; 
 
 // ====== DEBUG BANNER ======
 function setDebug(status, text) {
