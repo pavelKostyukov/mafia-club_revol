@@ -510,7 +510,7 @@ footer .brand{font-weight:600;color:var(--txt2);font-size:14px;margin-bottom:6px
 <label>Макс. мест</label><input type="number" id="gSeats" value="10" required>
 <label>Ведущий (имя)</label><input type="text" id="gHostN" placeholder="Дядя Коля" required>
 <label>Роль ведущего</label><input type="text" id="gHostR" value="мастер">
-<label>URL фото ведущего</label><input type="text" id="gHostPhoto" placeholder="https://...">
+<label>URL фото ведущего</label><input type="text" id="gHostPhoto" placeholder="https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg">
 <label>Организатор</label><input type="text" id="gOrgN" placeholder="Дядя Боря">
 <label>URL фото организатора</label><input type="text" id="gOrgPhoto" placeholder="https://...">
 <label>URL обложки</label><input type="text" id="gCover" placeholder="https://...">
@@ -789,7 +789,7 @@ document.getElementById('gPrice').value=g.price||1500;
 document.getElementById('gSeats').value=g.max_seats||10;
 document.getElementById('gHostN').value=g.host_name||'';
 document.getElementById('gHostR').value=g.host_role||'мастер';
-document.getElementById('gHostPhoto').value=g.host_photo_url||'';
+document.getElementById('gHostPhoto').value=g.host_photo_url||'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg';
 document.getElementById('gOrgN').value=g.organizer_name||'';
 document.getElementById('gOrgPhoto').value=g.organizer_photo_url||'';
 document.getElementById('gCover').value=g.cover_image_url||'';
@@ -805,7 +805,7 @@ document.getElementById('gPrice').value='1500';
 document.getElementById('gSeats').value='10';
 document.getElementById('gHostN').value='';
 document.getElementById('gHostR').value='мастер';
-document.getElementById('gHostPhoto').value='';
+document.getElementById('gHostPhoto').value='https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg';
 document.getElementById('gOrgN').value='';
 document.getElementById('gOrgPhoto').value='';
 document.getElementById('gCover').value='';
@@ -828,10 +828,10 @@ price:parseInt(document.getElementById('gPrice').value),
 max_seats:parseInt(document.getElementById('gSeats').value),
 host_name:document.getElementById('gHostN').value,
 host_role:document.getElementById('gHostR').value||'мастер',
-host_photo_url:document.getElementById('gHostPhoto').value||null,
+host_photo_url:document.getElementById('gHostPhoto').value||'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg',
 organizer_name:document.getElementById('gOrgN').value||null,
 organizer_role:'организатор',
-organizer_photo_url:document.getElementById('gOrgPhoto').value||null,
+organizer_photo_url:document.getElementById('gOrgPhoto').value||'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg',
 cover_image_url:document.getElementById('gCover').value||null,
 status:'scheduled'
 };
