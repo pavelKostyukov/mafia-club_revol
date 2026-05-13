@@ -6,2151 +6,1553 @@
 <title>Mafia Club — Расписание</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- Supabase JS подключаем сразу -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+/* ═══════════════ DESIGN TOKENS ═══════════════ */
 :root {
-  --bg: #eef2f7;
-  --bg-soft: #e3eaf2;
-  --card: #ffffff;
-  --text: #1a1a1a;
-  --text-light: #6b6b6b;
-  --text-muted: #a0a0a0;
-  --border: #e0e6ec;
-  --blue: #1e88e5;
-  --blue-deep: #1976d2;
-  --blue-bright: #2196f3;
-  --blue-soft: #e3f2fd;
-  --green: #16a34a;
-  --red: #ef4444;
-  --gold: #fbbf24;
-  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08);
-  --shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
+  --bg:        #f4f6fb;
+  --bg-soft:   #edf0f7;
+  --card:      #ffffff;
+  --text:      #0f172a;
+  --text-2:    #475569;
+  --text-3:    #94a3b8;
+  --border:    rgba(15,23,42,.08);
+  --border-md: rgba(15,23,42,.12);
+
+  --blue:      #2563eb;
+  --blue-h:    #1d4ed8;
+  --blue-light:#dbeafe;
+  --blue-glow: rgba(37,99,235,.18);
+  --green:     #059669;
+  --green-bg:  rgba(5,150,105,.1);
+  --red:       #e11d48;
+  --red-bg:    rgba(225,29,72,.1);
+  --amber:     #d97706;
+  --gold:      #f59e0b;
+
+  --r-card:    16px;
+  --r-pill:    999px;
+  --r-btn:     10px;
+  --r-tag:     8px;
+
+  --sh-sm: 0 1px 2px rgba(15,23,42,.04), 0 2px 6px rgba(15,23,42,.04);
+  --sh-md: 0 4px 12px rgba(15,23,42,.06), 0 1px 4px rgba(15,23,42,.04);
+  --sh-lg: 0 12px 32px rgba(15,23,42,.08), 0 4px 12px rgba(15,23,42,.05);
+  --sh-xl: 0 24px 48px rgba(15,23,42,.12), 0 8px 20px rgba(15,23,42,.06);
+
+  --ease: cubic-bezier(.22,.1,.36,1);
+  --dur: .22s;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
+
+/* ═══════════════ RESET & BASE ═══════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 a { color: inherit; text-decoration: none; }
+img { display: block; }
 
-/* ============ DEBUG BANNER ============ */
-.debug-banner {
-  background: #fff3cd;
-  border-bottom: 2px solid #ffc107;
-  padding: 10px 22px;
-  font-size: 13px;
-  color: #856404;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.debug-banner.connected { background: #d4edda; border-color: #28a745; color: #155724; }
-.debug-banner.error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
-.debug-banner .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.debug-banner .dot.yellow { background: #ffc107; }
-.debug-banner .dot.green { background: #28a745; }
-.debug-banner .dot.red { background: #dc3545; }
+/* ═══════════════ STATUS BANNER ═══════════════ */
+.status-bar { display: flex; align-items: center; gap: 8px; padding: 8px 20px; font-size: 12.5px; font-weight: 500; }
+.status-bar.connecting { background: #fef9c3; color: #854d0e; }
+.status-bar.ok         { background: #dcfce7; color: #14532d; }
+.status-bar.err        { background: #fee2e2; color: #7f1d1d; }
+.status-bar .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: currentColor; opacity: .7; }
 
-/* ============ NAV ============ */
-.nav { background: transparent; border-bottom: 1px solid #dde3ea; }
-.nav-inner { max-width: 1200px; margin: 0 auto; padding: 18px 22px; display: flex; align-items: center; gap: 26px; }
-.burger { display: flex; flex-direction: column; gap: 5px; padding: 6px; cursor: pointer; flex-shrink: 0; }
-.burger span { width: 24px; height: 2.5px; background: #bdbdbd; border-radius: 2px; }
-.nav-links { display: flex; gap: 36px; font-size: 17px; align-items: center; font-weight: 400; }
-.nav-links a { color: #1a1a1a; padding: 4px 0; transition: color .15s; white-space: nowrap; }
-.nav-links a.active { color: #1a1a1a; font-weight: 500; }
-.nav-links a.disabled { color: #c4c4c4; cursor: not-allowed; }
-.nav-spacer { flex: 1; }
-.nav-avatar { width: 44px; height: 44px; border-radius: 50%; background: #ccc; overflow: hidden; border: 1.5px solid var(--border); cursor: pointer; flex-shrink: 0; }
-.nav-avatar svg { width: 100%; height: 100%; display: block; }
-.nav-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* ============ DATES ============ */
-.dates-wrapper { border-top: 1px solid #dde3ea; border-bottom: 1px solid #dde3ea; background: var(--bg); }
-.dates-bar { max-width: 1200px; margin: 0 auto; padding: 18px 22px 14px; display: flex; align-items: center; gap: 12px; }
-.dates-arrow { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; font-size: 20px; cursor: pointer; border-radius: 50%; transition: background .15s; }
-.dates-arrow:hover { background: var(--card); color: var(--text); }
-.dates-scroll { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; flex: 1; min-width: 0; }
-@media (max-width: 768px) { .dates-scroll { display: flex; overflow-x: auto; scrollbar-width: none; } .dates-scroll::-webkit-scrollbar { display: none; } }
-.date-pill { padding: 11px 18px; border: 1px solid #d8dde3; border-radius: 999px; background: var(--card); font-size: 14px; color: #1a1a1a; white-space: nowrap; transition: all .15s; font-family: inherit; text-align: center; }
-.date-pill:hover { border-color: var(--blue-bright); }
-.date-pill.today { border-color: var(--blue); color: var(--blue); font-weight: 500; }
-.date-pill.active { background: var(--blue-bright); color: white; border-color: var(--blue-bright); font-weight: 500; }
-.date-pill.today.active { background: var(--blue); color: white; }
-/* Индикатор наличия игр */
-.date-pill .game-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; margin-left: 6px; vertical-align: middle; }
-.date-pill.active .game-dot { background: white; }
-
-/* ============ TAGS ============ */
-.tags-wrapper { border-bottom: 1px solid #dde3ea; background: var(--bg); }
-.tags-bar { max-width: 1200px; margin: 0 auto; padding: 14px 22px; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
-.tags-bar::-webkit-scrollbar { display: none; }
-.tag-pill { padding: 9px 18px; border: 1px solid #d8dde3; border-radius: 8px; background: #f4f6f9; font-size: 13.5px; color: #999; white-space: nowrap; flex-shrink: 0; transition: all .15s; font-family: inherit; cursor: pointer; }
-.tag-pill:hover { border-color: var(--blue-bright); color: var(--text); }
-.tag-pill.active { background: var(--card); color: var(--text); border-color: #c7ced6; font-weight: 500; }
-
-/* ============ TIME LABEL ============ */
-.time-label { max-width: 1200px; margin: 0 auto; padding: 22px 22px 14px; font-size: 22px; font-weight: 400; color: #1a1a1a; letter-spacing: -.01em; }
-
-/* ============ GAMES GRID ============ */
-.games-row { max-width: 1200px; margin: 0 auto 14px; padding: 0 22px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-@media (max-width: 900px) { .games-row { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 640px) { .games-row { grid-template-columns: 1fr; } }
-
-/* ============ CARDS ============ */
-.card-hero, .card-simple, .card-large { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); cursor: pointer; transition: box-shadow .15s; }
-.card-hero:hover, .card-simple:hover, .card-large:hover { box-shadow: var(--shadow-hover); }
-.card-hero { overflow: hidden; display: flex; flex-direction: row; min-height: 200px; }
-.card-hero .cover { width: 45%; flex-shrink: 0; background-size: cover; background-position: center; position: relative; }
-.cover-title { position: absolute; bottom: 14px; left: 14px; right: 14px; color: white; text-shadow: 0 1px 6px rgba(0,0,0,0.75); }
-.cover-title h3 { font-size: 26px; font-weight: 700; line-height: 1.05; letter-spacing: -.01em; }
-.cover-title p { font-size: 10px; margin-top: 4px; opacity: 0.95; line-height: 1.3; font-weight: 400; }
-.card-badge-top { position: absolute; top: 10px; left: 10px; }
-.card-heart { position: absolute; top: 10px; right: 12px; color: white; font-size: 14px; display: flex; align-items: center; gap: 4px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
-.card-heart svg { width: 22px; height: 22px; }
-
-.card-hero .info { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; min-width: 0; }
-.card-simple { padding: 14px 16px; display: flex; flex-direction: column; min-height: 200px; }
-.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.card-name { font-size: 15.5px; font-weight: 500; color: #1a1a1a; line-height: 1.25; }
-.card-time { font-size: 13px; color: #555; margin-top: 2px; }
-.card-price { font-size: 15.5px; font-weight: 700; color: var(--green); white-space: nowrap; flex-shrink: 0; }
-.card-loc { font-size: 10.5px; color: var(--blue-bright); margin-top: 4px; line-height: 1.3; }
-.card-host { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-.host-mini { width: 34px; height: 34px; border-radius: 50%; background: #d4a574; flex-shrink: 0; overflow: hidden; }
-.host-mini svg, .host-mini img { width: 100%; height: 100%; display: block; object-fit: cover; }
-.host-meta .name { font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1.15; }
-.host-meta .role { font-size: 11.5px; color: #888; margin-top: 1px; }
-.card-going-label { font-size: 11px; color: #888; margin-top: 12px; margin-bottom: 6px; font-weight: 400; }
-.players-grid { display: flex; flex-wrap: wrap; gap: 4px; }
-.players-grid .pavatar { width: 24px; height: 24px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; }
-.players-grid .pavatar.empty { background: #d8d8d8; }
-.players-grid .pavatar svg { width: 100%; height: 100%; display: block; }
-.dots-row { display: flex; gap: 5px; margin-top: 10px; }
-.dots-row .pavatar { width: 26px; height: 26px; border-radius: 50%; background: #d4a574; flex-shrink: 0; overflow: hidden; }
-.dots-row .pavatar.empty { background: #d8d8d8; }
-.dots-row .pavatar svg { width: 100%; height: 100%; display: block; }
-.card-bottom { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 12px; }
-.maybe-label { font-size: 11px; color: #888; }
-.plus-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 300; line-height: 1; transition: all .15s; box-shadow: 0 3px 8px rgba(33,150,243,0.35); }
-.plus-btn:hover { background: #1e88e5; transform: scale(1.05); }
-
-/* ============ LARGE CARD ============ */
-.card-large { overflow: hidden; display: flex; flex-direction: row; max-width: 760px; margin: 0 auto; }
-.card-large .cover { width: 240px; flex-shrink: 0; background-size: cover; background-position: center; position: relative; min-height: 360px; }
-.card-large .cover-title h3 { font-size: 28px; }
-.card-large .cover-title p { font-size: 10.5px; }
-.card-large .info { flex: 1; padding: 18px 22px; display: flex; flex-direction: column; }
-.card-large .info .card-name { font-size: 17px; }
-.card-large .hosts-block { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
-.card-large .players-grid .pavatar { width: 26px; height: 26px; }
-@media (max-width: 768px) {
-  .card-large { flex-direction: column; }
-  .card-large .cover { width: 100%; min-height: 260px; }
-}
-
-/* ============ TOP BRAND BADGE ============ */
-.badge-top-brand {
-  width: 60px; height: 60px;
-  border-radius: 50%;
-  background: var(--gold);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  color: #1a1a1a; font-weight: 800; font-size: 10px; line-height: 1.05;
-  border: 3px solid #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  position: relative;
-}
-.badge-top-brand::before, .badge-top-brand::after {
-  content: ''; position: absolute; width: 9px; height: 14px; background: #c43b3b;
-  top: 100%; transform: translateY(-6px);
-}
-.badge-top-brand::before { left: 14px; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); }
-.badge-top-brand::after { right: 14px; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); }
-
-/* ============ ABOUT ============ */
-.about-section { background: var(--bg-soft); padding: 40px 22px; margin-top: 40px; }
-.about-inner { max-width: 1200px; margin: 0 auto; }
-.about-section h2 { font-size: 28px; font-weight: 600; margin-bottom: 22px; color: #1a1a1a; letter-spacing: -.01em; }
-.about-card { background: var(--card); border-radius: 18px; padding: 22px; display: grid; grid-template-columns: 280px 1fr; gap: 26px; box-shadow: var(--shadow); margin-bottom: 32px; }
-.about-logo { background: linear-gradient(135deg, #1a1a3e 0%, #2c1f4a 100%); border-radius: 14px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-.about-logo svg { width: 85%; height: auto; }
-.about-info { display: flex; flex-direction: column; }
-.about-founder { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
-.about-founder .photo { width: 64px; height: 64px; border-radius: 50%; background: #d4a574; flex-shrink: 0; overflow: hidden; }
-.about-founder .photo svg { width: 100%; height: 100%; display: block; }
-.about-founder .data .name { font-size: 17px; font-weight: 700; color: #1a1a1a; }
-.about-founder .data .role { font-size: 13px; color: #777; margin-bottom: 6px; }
-.about-info p { font-size: 13.5px; color: #555; line-height: 1.65; margin-bottom: 14px; }
-.about-info .motto { font-style: italic; color: #1a1a1a; font-weight: 500; }
-.about-team-row { display: flex; gap: 28px; margin-top: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-.about-team-row .person { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; min-width: 80px; }
-.about-team-row .person .photo { width: 60px; height: 60px; border-radius: 50%; background: #d4a574; overflow: hidden; }
-.about-team-row .person .photo svg { width: 100%; height: 100%; display: block; }
-.about-team-row .person .name { font-size: 13.5px; font-weight: 600; color: #1a1a1a; }
-.about-team-row .person .role { font-size: 11px; color: #777; }
-@media (max-width: 768px) {
-  .about-card { grid-template-columns: 1fr; }
-  .about-logo { max-width: 240px; margin: 0 auto; }
-}
-
-  /* ============ GAME DETAIL PAGE ============ */
-.game-detail-view { display: none; padding: 30px 22px 40px; max-width: 800px; margin: 0 auto; }
-.game-detail-card { background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 24px; }
-.game-detail-cover { height: 280px; background-size: cover; background-position: center; background-color: #1a1410; }
-.game-detail-info { padding: 20px 24px; }
-.game-detail-info h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
-.game-detail-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; color: #555; }
-.game-detail-price { font-size: 20px; font-weight: 700; color: var(--green); }
-.game-detail-location { font-size: 13px; color: var(--blue-bright); margin-bottom: 16px; }
-.game-detail-hosts { display: flex; gap: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-.game-detail-host { display: flex; gap: 12px; align-items: center; }
-.game-detail-host .photo { width: 56px; height: 56px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; }
-.game-detail-host .photo svg { width: 100%; height: 100%; }
-.game-detail-host .name { font-size: 16px; font-weight: 700; }
-.game-detail-host .role { font-size: 13px; color: #777; }
-
-.game-detail-players { background: var(--card); border-radius: 16px; padding: 20px 24px; box-shadow: var(--shadow); }
-.game-detail-players h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-.player-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.player-row:last-child { border-bottom: none; }
-.player-row .photo { width: 48px; height: 48px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; position: relative; }
-.player-row .photo svg { width: 100%; height: 100%; }
-.player-row .info { flex: 1; min-width: 0; }
-.player-row .name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-.player-row .title { font-size: 12px; color: #777; }
-.player-row .stats { display: flex; gap: 16px; font-size: 13px; color: #555; }
-.player-row .stat { display: flex; flex-direction: column; align-items: center; }
-.player-row .stat-num { font-weight: 700; color: #1a1a1a; }
-.player-row .stat-label { font-size: 10px; color: #999; }
-
-.player-badge { position: absolute; bottom: -2px; right: -2px; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; color: white; text-transform: uppercase; }
-.player-badge.veteran { background: #1e88e5; }
-.player-badge.star { background: #e74c3c; }
-.player-badge.newbie { background: #95a5a6; }
-.player-badge.master { background: #f39c12; }
-
-@media (max-width: 768px) {
-  .game-detail-cover { height: 200px; }
-  .game-detail-hosts { flex-direction: column; }
-  .player-row .stats { gap: 12px; }
-}
-
-/* ============ HOSTS LIST ============ */
-.hosts-title { font-size: 28px; font-weight: 600; margin: 32px 0 20px; color: #1a1a1a; letter-spacing: -.01em; }
-.hosts-list { display: flex; gap: 22px; flex-wrap: wrap; }
-.host-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; min-width: 92px; }
-.host-card .photo { width: 84px; height: 84px; border-radius: 50%; background: #d4a574; overflow: hidden; box-shadow: var(--shadow); }
-.host-card .photo svg { width: 100%; height: 100%; display: block; }
-.host-card .name { font-size: 14px; font-weight: 700; color: #1a1a1a; }
-.host-card .role { font-size: 11px; color: #777; }
-
-.order-btn { display: block; width: 100%; max-width: 740px; margin: 30px auto 0; padding: 20px; background: var(--blue); color: white; border-radius: 999px; font-size: 18px; font-weight: 500; transition: background .15s; text-align: center; font-family: inherit; }
-.order-btn:hover { background: #1e88e5; }
-
-/* ============ REVIEWS ============ */
-.reviews-title { font-size: 28px; font-weight: 600; margin: 42px 0 20px; color: #1a1a1a; letter-spacing: -.01em; }
-.review-card { background: var(--card); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow); margin-bottom: 12px; display: flex; gap: 16px; }
-.review-card .photo { width: 48px; height: 48px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; }
-.review-card .photo svg { width: 100%; height: 100%; display: block; }
-.review-card .name { font-size: 14.5px; font-weight: 700; color: #1a1a1a; }
-.review-card .role { font-size: 11.5px; color: #777; margin-bottom: 6px; }
-.review-card .text { font-size: 13.5px; color: #555; line-height: 1.45; }
-
-/* ============ FOOTER ============ */
-footer { padding: 32px 22px; text-align: center; color: #999; font-size: 12px; background: var(--card); border-top: 1px solid var(--border); }
-footer .brand-row { font-weight: 600; color: #555; margin-bottom: 6px; font-size: 14px; }
-
-/* ============ MODAL ============ */
-.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-.modal-bg.open { display: flex; }
-.modal { background: white; border-radius: 16px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; padding: 26px 24px; text-align: center; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
-.modal-close { position: absolute; top: 12px; right: 14px; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 20px; }
-.modal-close:hover { color: #444; }
-.modal h2 { color: var(--blue); font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-.modal h3 { font-size: 24px; font-weight: 700; color: #1a1a1a; }
-.modal-meta { font-size: 13px; color: #666; margin-top: 4px; margin-bottom: 18px; }
-.modal-tabs { display: flex; gap: 4px; background: #f0f0f0; border-radius: 999px; padding: 3px; margin-bottom: 14px; }
-.modal-tabs button { flex: 1; padding: 9px 8px; border-radius: 999px; font-size: 12.5px; color: #666; font-family: inherit; font-weight: 500; }
-.modal-tabs button.active { background: var(--blue); color: white; }
-.modal-inputs { display: flex; gap: 8px; margin-bottom: 18px; }
-.modal-inputs input { flex: 1; padding: 11px 13px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; background: #fafafa; }
-.modal-inputs input:focus { outline: none; border-color: var(--blue-bright); background: white; }
-.table-wrap { position: relative; width: 270px; height: 270px; margin: 0 auto 18px; }
-.table-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: #555; text-align: center; line-height: 1.3; pointer-events: none; }
-.seat { position: absolute; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 500; cursor: pointer; background: white; border: 1.5px solid #ddd; color: #555; transition: all .15s; font-family: inherit; }
-.seat:hover:not(.taken) { border-color: var(--blue); color: var(--blue); transform: scale(1.08); }
-.seat.taken { background: #fbbabe; border-color: #f59a9e; color: #c0383d; cursor: not-allowed; }
-.seat.selected { background: #4ade80; border-color: #22c55e; color: white; transform: scale(1.1); }
-.checkbox-row { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 13px; color: #666; margin-bottom: 14px; }
-.checkbox-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-.checkbox-row input[type=text] { width: 110px; padding: 6px 9px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; }
-.btn-primary { width: 100%; padding: 14px; background: var(--blue); color: white; border-radius: 8px; font-size: 14px; font-weight: 500; margin-bottom: 8px; transition: background .15s; font-family: inherit; }
-.btn-primary:hover { background: #1e88e5; }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-secondary { width: 100%; padding: 14px; background: white; color: var(--blue); border: 1px solid var(--blue); border-radius: 8px; font-size: 14px; font-weight: 500; font-family: inherit; }
-.btn-secondary:hover { background: var(--blue-soft); }
-.legal { font-size: 10.5px; color: #999; margin-top: 14px; line-height: 1.4; }
-.legal a { color: var(--blue); }
-
-.empty-state { text-align: center; padding: 60px 20px; color: #999; font-size: 14px; }
-
-/* ============ LOADING ============ */
-.loading-spinner { text-align: center; padding: 40px 20px; }
-.loading-spinner::after {
-  content: '';
-  display: inline-block;
-  width: 32px; height: 32px;
-  border: 3px solid var(--border);
-  border-top-color: var(--blue);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ============ PROFILE PAGE ============ */
-.profile-view { display: none; padding: 30px 22px 40px; max-width: 1100px; margin: 0 auto; }
-.profile-grid { display: grid; grid-template-columns: 200px 1fr 220px; gap: 30px; align-items: start; padding-bottom: 30px; }
-.profile-left { display: flex; flex-direction: column; gap: 28px; padding-top: 10px; }
-.profile-badge-block { display: flex; flex-direction: column; align-items: center; gap: 6px; width: max-content; }
-.profile-badge-shield { width: 64px; height: 80px; position: relative; }
-.profile-badge-label { font-size: 14px; font-weight: 500; color: #1a1a1a; }
-.profile-name-block { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-.profile-name-block h1 { font-size: 30px; font-weight: 700; color: #1a1a1a; line-height: 1.1; cursor: pointer; transition: color .15s; }
-.profile-name-block h1:hover { color: var(--blue); }
-.profile-name-block .pf-title { font-size: 17px; color: #555; cursor: pointer; transition: color .15s; }
-.profile-name-block .pf-title:hover { color: var(--blue); }
-.profile-name-block .pf-star { background: #e74c3c; color: white; font-size: 12px; font-weight: 600; padding: 4px 16px; border-radius: 4px; margin-top: 4px; cursor: pointer; }
-
-.profile-center { display: flex; flex-direction: column; align-items: center; gap: 26px; }
-.profile-avatar-big { width: 300px; height: 300px; border-radius: 50%; border: 4px solid #84cc16; overflow: hidden; background: #2a2a2e; position: relative; cursor: pointer; background-size: cover; background-position: center; flex-shrink: 0; }
-.profile-avatar-big .upload-hint { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; opacity: 0; transition: opacity .2s; }
-.profile-avatar-big:hover .upload-hint { opacity: 1; }
-.profile-avatar-big input[type=file] { display: none; }
-
-.profile-medals { display: flex; gap: 24px; justify-content: center; }
-.medal-item { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 110px; text-align: center; }
-.medal-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-.medal-gold { background: linear-gradient(135deg, #d4a574, #b87333 50%, #8b4513); }
-.medal-green { background: linear-gradient(135deg, #84cc16, #4d7c0f); }
-.medal-pink { background: linear-gradient(135deg, #f9a8d4, #db2777); }
-.medal-icon svg { width: 30px; height: 30px; color: white; }
-.medal-label { font-size: 11px; color: #555; line-height: 1.3; }
-
-.profile-right { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; }
-.profile-btn { padding: 13px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; color: white; transition: opacity .15s; font-family: inherit; cursor: pointer; border: none; text-align: center; }
-.profile-btn:hover { opacity: 0.9; }
-.profile-btn.green { background: #84cc16; }
-.profile-btn.blue { background: var(--blue); }
-
-.profile-stats-wrap { border-top: 1px solid #d8dde3; border-bottom: 1px solid #d8dde3; padding: 26px 0; }
-.profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; max-width: 800px; margin: 0 auto; }
-.stat-col { text-align: center; padding: 0 20px; }
-.stat-col + .stat-col { border-left: 1px solid #d8dde3; }
-.stat-title { font-size: 13px; color: #555; margin-bottom: 12px; font-weight: 400; }
-.stat-numbers { display: flex; justify-content: center; align-items: baseline; gap: 24px; }
-.stat-block { display: flex; flex-direction: column; align-items: center; }
-.stat-num { font-size: 28px; font-weight: 700; color: #1a1a1a; line-height: 1; }
-.stat-label { font-size: 11px; color: #888; margin-top: 4px; }
-
-.profile-back { padding: 16px 22px; max-width: 1100px; margin: 0 auto; }
-.profile-back a { display: inline-flex; align-items: center; gap: 8px; color: var(--blue); font-size: 14px; cursor: pointer; }
-.profile-back a:hover { color: var(--blue-deep); }
-
-/* PROFILE FIXES */
-@media (max-width: 900px) {
-  .profile-grid { 
-    grid-template-columns: 1fr; 
-    gap: 24px; 
-    text-align: center;
-  }
-  .profile-left, .profile-right { 
-    align-items: center; 
-  }
-  .profile-name-block { 
-    align-items: center; 
-  }
-  .profile-avatar-big { 
-    width: 240px; 
-    height: 240px; 
-  }
-  .profile-medals {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .medal-item {
-    width: 100px;
-  }
-}
-
-@media (max-width: 640px) {
-  .profile-avatar-big { 
-    width: 200px; 
-    height: 200px; 
-  }
-  .profile-name-block h1 { 
-    font-size: 24px; 
-  }
-  .profile-stats {
-    grid-template-columns: 1fr;
-  }
-  .stat-col + .stat-col {
-    border-left: none;
-    border-top: 1px solid #d8dde3;
-    padding-top: 20px;
-    margin-top: 20px;
-  }
-}
-
-  /* ============ ADMIN PANEL ============ */
-.admin-view { 
-  display: none; 
-  padding: 30px 22px 40px; 
-  max-width: 1200px; 
-  margin: 0 auto; 
-  background: var(--bg);
-  min-height: 100vh;
-}
-.admin-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  margin-bottom: 24px; 
-  padding-bottom: 16px;
-  border-bottom: 2px solid var(--border);
-}
-.admin-header h1 { 
-  font-size: 28px; 
-  font-weight: 700; 
-  color: var(--text);
-}
-.admin-header button {
-  padding: 10px 20px;
-  background: var(--red);
-  color: white;
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.admin-tabs { 
-  display: flex; 
-  gap: 8px; 
-  margin-bottom: 24px; 
+/* ═══════════════ NAV ═══════════════ */
+.nav {
+  position: sticky; top: 0; z-index: 80;
+  background: rgba(244,246,251,.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--border);
 }
-.admin-tab { 
-  padding: 12px 24px; 
-  background: none; 
-  color: var(--text-light); 
-  font-size: 15px; 
-  font-weight: 500;
-  border-bottom: 3px solid transparent;
-  transition: all .2s;
+.nav-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 14px 24px;
+  display: flex; align-items: center; gap: 28px;
 }
-.admin-tab:hover { 
-  color: var(--blue); 
+.burger { display: flex; flex-direction: column; gap: 5px; padding: 7px; flex-shrink: 0; }
+.burger span { width: 22px; height: 2px; background: var(--text-2); border-radius: 2px;
+  transition: background var(--dur); }
+.burger:hover span { background: var(--text); }
+.nav-links { display: flex; gap: 32px; font-size: 15.5px; }
+.nav-links a { color: var(--text-2); font-weight: 400; padding: 2px 0; transition: color var(--dur); }
+.nav-links a:hover:not(.disabled) { color: var(--text); }
+.nav-links a.disabled { color: var(--text-3); cursor: not-allowed; }
+.nav-spacer { flex: 1; }
+.nav-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--bg-soft); overflow: hidden;
+  border: 2px solid var(--border-md); cursor: pointer; flex-shrink: 0;
+  transition: box-shadow var(--dur);
 }
-.admin-tab.active { 
-  color: var(--blue); 
-  border-bottom-color: var(--blue);
-}
+.nav-avatar:hover { box-shadow: 0 0 0 3px var(--blue-glow); }
+.nav-avatar img, .nav-avatar svg { width: 100%; height: 100%; object-fit: cover; }
 
-.admin-tab-content { 
-  background: var(--card); 
-  border-radius: 12px; 
-  padding: 24px; 
-  box-shadow: var(--shadow);
-}
-
-.admin-list { 
-  margin-top: 20px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 12px;
-}
-.admin-item { 
-  background: var(--bg); 
-  padding: 16px; 
-  border-radius: 8px; 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center;
-  border: 1px solid var(--border);
-}
-.admin-item-info h3 { 
-  font-size: 16px; 
-  font-weight: 600; 
-  margin-bottom: 4px;
-}
-.admin-item-info p { 
-  font-size: 13px; 
-  color: var(--text-light);
-}
-.admin-item-actions { 
-  display: flex; 
-  gap: 8px;
-}
-.admin-item-actions button { 
-  padding: 8px 16px; 
-  border-radius: 6px; 
-  font-size: 13px; 
-  font-weight: 500;
-}
-.admin-item-actions .edit { 
-  background: var(--blue); 
-  color: white;
-}
-.admin-item-actions .delete { 
-  background: var(--red); 
-  color: white;
-}
-
-.admin-modal { 
-  max-width: 500px; 
-}
-.admin-modal form { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 14px;
-}
-.admin-modal label { 
-  font-size: 13px; 
-  font-weight: 600; 
-  color: var(--text); 
-  margin-bottom: -8px;
-}
-.admin-modal input, 
-.admin-modal select { 
-  padding: 11px 13px; 
-  border: 1px solid var(--border); 
-  border-radius: 8px; 
-  font-family: inherit; 
-  font-size: 14px;
-}
-.admin-modal input:focus, 
-.admin-modal select:focus { 
-  outline: none; 
-  border-color: var(--blue);
-}
-
-.admin-upload { 
-  margin-bottom: 24px; 
-  padding: 20px; 
-  background: var(--bg); 
-  border-radius: 8px;
-  border: 2px dashed var(--border);
-}
-.admin-upload h3 { 
-  font-size: 16px; 
-  margin-bottom: 12px;
-}
-.admin-upload input[type=file] { 
-  margin-bottom: 12px;
-}
-#uploadStatus { 
-  margin-top: 12px; 
-  font-size: 13px; 
-  color: var(--green);
-}
-
-.admin-images-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-  gap: 16px;
-}
-.admin-image-card { 
-  position: relative; 
-  aspect-ratio: 16/9; 
-  border-radius: 8px; 
-  overflow: hidden; 
+/* ═══════════════ DATES ═══════════════ */
+.dates-strip {
   background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.dates-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 16px 24px;
+  display: flex; align-items: center; gap: 10px;
+}
+.arrow-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); font-size: 19px; flex-shrink: 0;
+  transition: all var(--dur);
+}
+.arrow-btn:hover { background: var(--card); color: var(--text); box-shadow: var(--sh-sm); }
+.dates-grid {
+  flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+}
+@media (max-width: 768px) {
+  .dates-grid { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .dates-grid::-webkit-scrollbar { display: none; }
+}
+.date-btn {
+  padding: 10px 14px; border-radius: var(--r-pill);
+  border: 1.5px solid var(--border-md);
+  background: var(--card); font-size: 13.5px; color: var(--text-2);
+  white-space: nowrap; text-align: center; flex-shrink: 0;
+  font-family: inherit; font-weight: 400;
+  transition: all var(--dur);
+}
+.date-btn:hover { border-color: var(--blue); color: var(--blue); }
+.date-btn.today { border-color: var(--blue); color: var(--blue); font-weight: 600; }
+.date-btn.active {
+  background: linear-gradient(135deg, var(--blue), #3b82f6);
+  border-color: transparent; color: #fff; font-weight: 600;
+  box-shadow: 0 4px 12px var(--blue-glow);
+}
+
+/* ═══════════════ TAGS ═══════════════ */
+.tags-strip { border-bottom: 1px solid var(--border); }
+.tags-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 12px 24px;
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+}
+.tags-inner::-webkit-scrollbar { display: none; }
+.tag-btn {
+  padding: 8px 16px; border-radius: var(--r-tag);
+  border: 1.5px solid var(--border-md);
+  background: #f1f4fb; font-size: 13px; color: var(--text-3);
+  white-space: nowrap; flex-shrink: 0; font-family: inherit;
+  transition: all var(--dur);
+}
+.tag-btn:hover { border-color: var(--blue); color: var(--blue); }
+.tag-btn.active {
+  background: var(--card); color: var(--text);
+  border-color: var(--border-md); font-weight: 500;
+}
+
+/* ═══════════════ SECTION LAYOUT ═══════════════ */
+.sec { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+.time-heading {
+  display: flex; align-items: center; gap: 16px;
+  padding: 24px 24px 14px;
+  max-width: 1280px; margin: 0 auto;
+  font-size: 20px; font-weight: 400; color: var(--text);
+  letter-spacing: -.02em;
+}
+.time-heading::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--border-md), transparent);
+}
+
+.games-grid {
+  max-width: 1280px; margin: 0 auto 16px;
+  padding: 0 24px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+@media (max-width: 1024px) { .games-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .games-grid { grid-template-columns: 1fr; } }
+
+/* ═══════════════ CARD BASE ═══════════════ */
+.card {
+  background: var(--card); border-radius: var(--r-card);
+  box-shadow: var(--sh-sm); cursor: pointer;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  overflow: hidden;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--sh-lg); }
+
+/* ─── HERO CARD ─── */
+.card-hero { display: flex; min-height: 210px; }
+.card-hero .cover {
+  width: 44%; flex-shrink: 0;
+  background-size: cover; background-position: center;
+  background-color: #1a1a2e; position: relative;
+}
+.card-hero .cover::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,.35) 0%, transparent 70%),
+              linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 55%);
+}
+.cover-text {
+  position: absolute; bottom: 14px; left: 14px; right: 14px;
+  color: #fff; z-index: 1; text-shadow: 0 1px 6px rgba(0,0,0,.5);
+}
+.cover-text h3 { font-size: 24px; font-weight: 700; line-height: 1.05; letter-spacing: -.02em; }
+.cover-text p  { font-size: 10px; margin-top: 4px; opacity: .9; line-height: 1.4; }
+.price-badge {
+  position: absolute; top: 12px; right: 12px; z-index: 1;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+  color: var(--green); font-size: 13px; font-weight: 700;
+  padding: 5px 11px; border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+.topbrand-badge {
+  position: absolute; top: 12px; left: 12px; z-index: 1;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--gold); border: 2.5px solid #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: #1a1a1a; line-height: 1.15;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+.heart-badge {
+  position: absolute; top: 12px; right: 12px; z-index: 1;
+  background: rgba(0,0,0,.35); backdrop-filter: blur(4px);
+  color: #fff; font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: 20px;
+  display: flex; align-items: center; gap: 4px;
+}
+.heart-badge svg { width: 14px; height: 14px; fill: #f43f5e; }
+.card-hero .body { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; }
+
+/* ─── SIMPLE CARD ─── */
+.card-simple { padding: 16px 18px; display: flex; flex-direction: column; min-height: 210px; }
+
+/* ─── LARGE CARD ─── */
+.card-large { display: flex; max-width: 760px; margin: 0 auto; }
+.card-large .cover { width: 240px; flex-shrink: 0; min-height: 360px; }
+.card-large .body { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; }
+@media (max-width: 720px) {
+  .card-large { flex-direction: column; max-width: 100%; }
+  .card-large .cover { width: 100%; min-height: 220px; }
+}
+
+/* ─── CARD INTERNALS ─── */
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.card-type { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.25; }
+.card-time { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.card-loc  { font-size: 10.5px; color: #3b82f6; margin-top: 4px; line-height: 1.3; }
+.card-price-inline {
+  font-size: 15px; font-weight: 700; color: var(--green);
+  white-space: nowrap; flex-shrink: 0; padding-top: 2px;
+}
+
+.host-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.host-ava {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: #ddd; overflow: hidden;
+}
+.host-ava img, .host-ava svg { width: 100%; height: 100%; object-fit: cover; }
+.host-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.host-role { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+.going-label { font-size: 11px; color: var(--text-3); margin-top: 12px; margin-bottom: 6px; }
+.avatars { display: flex; flex-wrap: wrap; gap: 4px; }
+.ava {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: #d4a574; overflow: hidden;
+}
+.ava.empty { background: #e2e8f0; }
+.ava svg { width: 100%; height: 100%; }
+.ava-row { display: flex; gap: 5px; margin-top: 8px; }
+.ava-row .ava { width: 26px; height: 26px; }
+
+.card-foot {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-top: auto; padding-top: 14px;
+}
+.maybe-txt { font-size: 11px; color: var(--text-3); }
+.reg-btn {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), #3b82f6);
+  color: #fff; font-size: 26px; font-weight: 300; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px var(--blue-glow);
+  transition: all var(--dur);
+}
+.reg-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px var(--blue-glow); }
+
+/* ═══════════════ ABOUT / О НАС ═══════════════ */
+.about-section { background: var(--bg-soft); padding: 48px 24px; margin-top: 48px; }
+.about-inner { max-width: 1280px; margin: 0 auto; }
+.section-title { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -.03em; margin-bottom: 24px; }
+.about-card {
+  background: var(--card); border-radius: 20px;
+  padding: 28px; display: grid; grid-template-columns: 260px 1fr; gap: 32px;
+  box-shadow: var(--sh-md); margin-bottom: 36px;
+}
+.about-logo {
+  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+  border-radius: 16px; aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.about-logo svg { width: 80%; height: auto; }
+.about-info { display: flex; flex-direction: column; }
+.founder-row { display: flex; gap: 14px; margin-bottom: 18px; align-items: flex-start; }
+.founder-ava { width: 60px; height: 60px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; }
+.founder-ava svg { width: 100%; height: 100%; }
+.founder-name { font-size: 16px; font-weight: 700; }
+.founder-role { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+.about-info p { font-size: 13.5px; color: var(--text-2); line-height: 1.7; margin-bottom: 14px; }
+.about-info .motto { font-style: italic; color: var(--text); font-weight: 500; }
+.team-row { display: flex; gap: 24px; flex-wrap: wrap; margin: 12px 0 20px; }
+.team-person { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 76px; text-align: center; }
+.team-ava { width: 56px; height: 56px; border-radius: 50%; background: #d4a574; overflow: hidden; }
+.team-ava svg { width: 100%; height: 100%; }
+.team-name { font-size: 12.5px; font-weight: 600; }
+.team-role { font-size: 10.5px; color: var(--text-3); }
+@media (max-width: 760px) { .about-card { grid-template-columns: 1fr; } }
+
+.hosts-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 36px; }
+.host-chip { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 88px; text-align: center; }
+.host-chip .ph { width: 80px; height: 80px; border-radius: 50%; background: #d4a574; overflow: hidden; box-shadow: var(--sh-sm); }
+.host-chip .ph svg { width: 100%; height: 100%; }
+.host-chip .hn { font-size: 13.5px; font-weight: 700; }
+.host-chip .hr { font-size: 10.5px; color: var(--text-3); }
+
+.order-cta {
+  display: block; width: 100%; max-width: 680px; margin: 0 auto 40px;
+  padding: 18px; border-radius: var(--r-pill);
+  background: linear-gradient(135deg, var(--blue), #3b82f6);
+  color: #fff; font-size: 17px; font-weight: 600; text-align: center;
+  box-shadow: 0 6px 20px var(--blue-glow);
+  transition: all var(--dur);
+}
+.order-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 28px var(--blue-glow); }
+
+.reviews-list { display: flex; flex-direction: column; gap: 12px; }
+.review-card { background: var(--card); border-radius: 14px; padding: 18px; display: flex; gap: 16px; box-shadow: var(--sh-sm); }
+.rev-ava { width: 46px; height: 46px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; }
+.rev-ava svg { width: 100%; height: 100%; }
+.rev-name { font-size: 14px; font-weight: 700; }
+.rev-role { font-size: 11.5px; color: var(--text-3); margin-bottom: 5px; }
+.rev-text { font-size: 13.5px; color: var(--text-2); line-height: 1.5; }
+
+/* ═══════════════ FOOTER ═══════════════ */
+footer {
+  background: var(--card); border-top: 1px solid var(--border);
+  padding: 32px 24px; text-align: center;
+  font-size: 12.5px; color: var(--text-3);
+}
+.foot-brand { font-weight: 700; color: var(--text-2); font-size: 14px; margin-bottom: 6px; }
+
+/* ═══════════════ MODAL ═══════════════ */
+.overlay {
+  position: fixed; inset: 0; background: rgba(15,23,42,.45);
+  backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200; padding: 20px;
+}
+.overlay.open { display: flex; }
+.modal-box {
+  background: var(--card); border-radius: 20px;
+  width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto;
+  padding: 28px 26px; position: relative;
+  box-shadow: var(--sh-xl);
+  animation: modalIn .25s var(--ease);
+}
+@keyframes modalIn { from { opacity:0; transform: translateY(12px) scale(.97); } to { opacity:1; transform: none; } }
+.modal-x {
+  position: absolute; top: 14px; right: 16px;
+  width: 30px; height: 30px; border-radius: 50%;
+  color: var(--text-3); font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--dur);
+}
+.modal-x:hover { background: var(--bg); color: var(--text); }
+.modal-kicker { color: var(--blue); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+.modal-title { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.modal-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; margin-bottom: 18px; }
+
+.tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 10px; padding: 3px; margin-bottom: 16px; }
+.tabs button { flex: 1; padding: 8px; border-radius: 8px; font-size: 12.5px; color: var(--text-2); font-family: inherit; font-weight: 500; transition: all var(--dur); }
+.tabs button.active { background: var(--blue); color: #fff; box-shadow: 0 2px 6px var(--blue-glow); }
+
+.inputs { display: flex; gap: 8px; margin-bottom: 16px; }
+.inputs input {
+  flex: 1; padding: 11px 14px;
+  border: 1.5px solid var(--border-md); border-radius: var(--r-btn);
+  font-family: inherit; font-size: 14px; background: var(--bg);
+  transition: border-color var(--dur);
+}
+.inputs input:focus { outline: none; border-color: var(--blue); background: var(--card); }
+
+/* Seats table */
+.table-wrap { position: relative; width: 268px; height: 268px; margin: 0 auto 18px; }
+.table-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13.5px; color: var(--text-2); text-align: center; line-height: 1.4; pointer-events: none;
+}
+.seat {
+  position: absolute; width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  background: var(--card); border: 1.5px solid var(--border-md);
+  color: var(--text-2); cursor: pointer;
+  transition: all var(--dur);
+}
+.seat:hover:not(.taken) { border-color: var(--blue); color: var(--blue); transform: scale(1.1); }
+.seat.taken { background: var(--red-bg); border-color: #fca5a5; color: #b91c1c; cursor: default; }
+.seat.sel   { background: var(--blue); border-color: var(--blue); color: #fff; transform: scale(1.12);
+  box-shadow: 0 4px 12px var(--blue-glow); }
+
+.checks { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 13px; color: var(--text-2); margin-bottom: 14px; }
+.checks label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.checks input[type=text] { width: 100px; padding: 5px 9px; border: 1.5px solid var(--border-md); border-radius: 6px; font-family: inherit; font-size: 13px; }
+
+.btn-primary {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--blue), #3b82f6);
+  color: #fff; border-radius: var(--r-btn);
+  font-size: 14px; font-weight: 600; margin-bottom: 8px;
+  box-shadow: 0 4px 12px var(--blue-glow);
+  transition: all var(--dur);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--blue-glow); }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn-outline {
+  width: 100%; padding: 13px;
+  background: transparent; color: var(--blue);
+  border: 1.5px solid var(--blue); border-radius: var(--r-btn);
+  font-size: 14px; font-weight: 500; transition: all var(--dur);
+}
+.btn-outline:hover { background: var(--blue-light); }
+.legal { font-size: 10.5px; color: var(--text-3); margin-top: 14px; line-height: 1.5; text-align: center; }
+.legal a { color: var(--blue); }
+
+/* ═══════════════ PROFILE ═══════════════ */
+.profile-view { display: none; padding: 24px 24px 48px; max-width: 1100px; margin: 0 auto; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--blue); font-size: 14px; cursor: pointer; margin-bottom: 24px; }
+.back-link:hover { color: var(--blue-h); }
+
+.profile-layout { display: grid; grid-template-columns: 180px 1fr 200px; gap: 32px; align-items: start; margin-bottom: 36px; }
+.badge-block { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.badge-svg { width: 60px; height: 76px; }
+.badge-lbl { font-size: 13.5px; font-weight: 500; }
+.pf-name-block { display: flex; flex-direction: column; gap: 5px; }
+.pf-name-block h1 { font-size: 28px; font-weight: 800; cursor: pointer; letter-spacing: -.03em; transition: color var(--dur); }
+.pf-name-block h1:hover { color: var(--blue); }
+.pf-role-txt { font-size: 16px; color: var(--text-2); cursor: pointer; transition: color var(--dur); }
+.pf-role-txt:hover { color: var(--blue); }
+.pf-badge-tag { background: #e11d48; color: #fff; font-size: 11.5px; font-weight: 700; padding: 4px 14px; border-radius: 5px; width: max-content; cursor: pointer; }
+
+.pf-center { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.pf-avatar {
+  width: 280px; height: 280px; border-radius: 50%;
+  border: 4px solid #84cc16;
+  background: var(--bg-soft); background-size: cover; background-position: center;
+  cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0;
+}
+.pf-avatar .upload-hint {
+  position: absolute; inset: 0; background: rgba(15,23,42,.6);
+  color: #fff; font-size: 14px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity var(--dur);
+}
+.pf-avatar:hover .upload-hint { opacity: 1; }
+.pf-avatar input[type=file] { display: none; }
+
+.medals-row { display: flex; gap: 20px; }
+.medal { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100px; text-align: center; }
+.medal-ico { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: var(--sh-md); }
+.m-gold  { background: linear-gradient(135deg, #d4a574, #b87333, #7c3a0a); }
+.m-green { background: linear-gradient(135deg, #4ade80, #059669); }
+.m-pink  { background: linear-gradient(135deg, #f9a8d4, #db2777); }
+.medal-ico svg { width: 28px; height: 28px; color: #fff; }
+.medal-lbl { font-size: 10.5px; color: var(--text-2); line-height: 1.35; }
+
+.pf-actions { display: flex; flex-direction: column; gap: 10px; }
+.pf-btn { padding: 12px 18px; border-radius: 8px; font-size: 13.5px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; color: #fff; transition: all var(--dur); }
+.pf-btn:hover { opacity: .88; transform: translateY(-1px); }
+.pf-btn.green { background: #16a34a; }
+.pf-btn.blue  { background: var(--blue); }
+
+.stats-strip { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 28px 0; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 700px; margin: 0 auto; }
+.stat-col { text-align: center; padding: 0 20px; }
+.stat-col + .stat-col { border-left: 1px solid var(--border); }
+.stat-head { font-size: 12.5px; color: var(--text-2); margin-bottom: 12px; }
+.stat-nums { display: flex; justify-content: center; gap: 20px; }
+.stat-num { font-size: 30px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -.03em; }
+.stat-lbl { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+@media (max-width: 900px) {
+  .profile-layout { grid-template-columns: 1fr; text-align: center; }
+  .badge-block, .pf-name-block, .pf-actions { align-items: center; }
+  .pf-avatar { width: 220px; height: 220px; }
+}
+
+/* ═══════════════ GAME DETAIL ═══════════════ */
+.gd-view { display: none; padding: 24px 24px 48px; max-width: 840px; margin: 0 auto; }
+.gd-card { background: var(--card); border-radius: 20px; overflow: hidden; box-shadow: var(--sh-md); margin-bottom: 24px; }
+.gd-cover { height: 280px; background-size: cover; background-position: center; background-color: #1a1a2e;
+  background: linear-gradient(135deg, #1a1a2e, #2d2b55); }
+.gd-info { padding: 22px 26px; }
+.gd-info h2 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.gd-meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 15px; color: var(--text-2); }
+.gd-price { font-size: 20px; font-weight: 800; color: var(--green); }
+.gd-loc { font-size: 12.5px; color: #3b82f6; margin-bottom: 18px; }
+.gd-hosts { display: flex; gap: 16px; padding-top: 18px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.gd-host { display: flex; gap: 12px; align-items: center; }
+.gd-hava { width: 52px; height: 52px; border-radius: 50%; background: #d4a574; overflow: hidden; }
+.gd-hava svg { width: 100%; height: 100%; }
+.gd-hname { font-size: 15px; font-weight: 700; }
+.gd-hrole { font-size: 12px; color: var(--text-3); }
+
+.gd-players { background: var(--card); border-radius: 20px; padding: 22px 26px; box-shadow: var(--sh-md); }
+.gd-players h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+.player-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.player-row:last-child { border-bottom: none; }
+.player-row .pava { width: 46px; height: 46px; border-radius: 50%; background: #d4a574; overflow: hidden; flex-shrink: 0; position: relative; }
+.player-row .pava svg { width: 100%; height: 100%; }
+.pl-badge { position: absolute; bottom: -2px; right: -2px; font-size: 8.5px; font-weight: 700; padding: 2px 5px; border-radius: 4px; color: #fff; }
+.pl-b-v { background: #2563eb; }
+.pl-b-s { background: #e11d48; }
+.pl-b-n { background: #94a3b8; }
+.pl-b-m { background: #d97706; }
+.pl-info { flex: 1; }
+.pl-name { font-size: 14.5px; font-weight: 600; }
+.pl-title { font-size: 11.5px; color: var(--text-3); }
+.pl-stats { display: flex; gap: 14px; font-size: 13px; }
+.pl-stat .n { font-weight: 700; font-size: 15px; }
+.pl-stat .l { font-size: 10px; color: var(--text-3); }
+
+/* ═══════════════ ADMIN ═══════════════ */
+.admin-view { display: none; padding: 28px 24px 48px; max-width: 1200px; margin: 0 auto; }
+.admin-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 2px solid var(--border); }
+.admin-head h1 { font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
+.admin-exit { padding: 9px 18px; background: var(--red-bg); color: var(--red); border-radius: var(--r-btn); font-size: 13.5px; font-weight: 600; transition: all var(--dur); }
+.admin-exit:hover { background: var(--red); color: #fff; }
+
+.admin-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.a-tab { padding: 11px 22px; font-size: 14.5px; font-weight: 500; color: var(--text-3); border-bottom: 2.5px solid transparent; transition: all var(--dur); }
+.a-tab:hover { color: var(--text); }
+.a-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+.admin-pane { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: var(--sh-sm); }
+.admin-pane + .admin-pane { margin-top: 12px; }
+
+.admin-items { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.admin-row {
+  background: var(--bg); padding: 14px 18px; border-radius: 12px;
+  display: flex; justify-content: space-between; align-items: center;
   border: 1px solid var(--border);
 }
-.admin-image-card img { 
-  width: 100%; 
-  height: 100%; 
-  object-fit: cover;
-}
-.admin-image-url { 
-  position: absolute; 
-  bottom: 0; 
-  left: 0; 
-  right: 0; 
-  background: rgba(0,0,0,0.8); 
-  color: white; 
-  padding: 8px; 
-  font-size: 11px; 
-  word-break: break-all;
-}
-.admin-image-copy { 
-  position: absolute; 
-  top: 8px; 
-  right: 8px; 
-  padding: 6px 12px; 
-  background: var(--blue); 
-  color: white; 
-  border-radius: 6px; 
-  font-size: 12px; 
-  cursor: pointer;
-}
+.admin-row h3 { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+.admin-row p  { font-size: 12.5px; color: var(--text-2); }
+.row-acts { display: flex; gap: 8px; }
+.row-acts button { padding: 7px 14px; border-radius: 7px; font-size: 12.5px; font-weight: 600; transition: all var(--dur); }
+.btn-edit { background: var(--blue-light); color: var(--blue); }
+.btn-edit:hover { background: var(--blue); color: #fff; }
+.btn-del  { background: var(--red-bg); color: var(--red); }
+.btn-del:hover  { background: var(--red); color: #fff; }
 
-@media (max-width: 768px) {
-  .admin-tabs { 
-    overflow-x: auto; 
-    scrollbar-width: none;
-  }
-  .admin-item { 
-    flex-direction: column; 
-    align-items: flex-start; 
-    gap: 12px;
-  }
-  .admin-images-grid { 
-    grid-template-columns: 1fr;
-  }
-}
+.upload-zone { background: var(--bg); border: 2px dashed var(--border-md); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.upload-zone h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.upload-status { margin-top: 10px; font-size: 13px; color: var(--green); }
 
-/* ============ DRAWER ============ */
-.drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 90; opacity: 0; transition: opacity .25s; }
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.img-card { border-radius: 10px; overflow: hidden; background: var(--bg); border: 1px solid var(--border); position: relative; aspect-ratio: 16/10; }
+.img-card img { width: 100%; height: 100%; object-fit: cover; }
+.img-url { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,.8); color: #fff; padding: 6px 8px; font-size: 10.5px; word-break: break-all; }
+.img-copy { position: absolute; top: 8px; right: 8px; padding: 5px 10px; background: var(--blue); color: #fff; border-radius: 6px; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+
+.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.form-group label { font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.form-group input, .form-group select, .form-group textarea {
+  padding: 10px 13px; border: 1.5px solid var(--border-md); border-radius: var(--r-btn);
+  font-family: inherit; font-size: 13.5px; background: var(--bg);
+  transition: border-color var(--dur);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--blue); background: var(--card); }
+
+/* ═══════════════ DRAWER ═══════════════ */
+.drawer-bg { position: fixed; inset: 0; background: rgba(15,23,42,.4); z-index: 100; display: none; opacity: 0; transition: opacity var(--dur); }
 .drawer-bg.open { display: block; opacity: 1; }
-.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 300px; max-width: 85vw; background: white; z-index: 91; transform: translateX(-100%); transition: transform .25s ease-out; display: flex; flex-direction: column; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
-.drawer.open { transform: translateX(0); }
-.drawer-header { padding: 22px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.drawer-header .title { font-size: 18px; font-weight: 700; color: #1a1a1a; }
-.drawer-close { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #888; font-size: 22px; transition: background .15s; }
-.drawer-close:hover { background: #f0f0f0; color: #1a1a1a; }
-.drawer-user { padding: 18px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
-.drawer-user .avatar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
-.drawer-user .avatar svg { width: 100%; height: 100%; display: block; }
-.drawer-user .meta .name { font-size: 15px; font-weight: 600; color: #1a1a1a; }
-.drawer-user .meta .sub { font-size: 12px; color: #888; }
-.drawer-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
-.drawer-nav a { display: flex; align-items: center; gap: 14px; padding: 12px 24px; font-size: 15px; color: #1a1a1a; transition: background .15s; cursor: pointer; }
-.drawer-nav a:hover { background: #f5f7fa; }
-.drawer-nav a.disabled { color: #c4c4c4; cursor: not-allowed; }
-.drawer-nav a.disabled:hover { background: transparent; }
-.drawer-nav .icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #888; }
-.drawer-nav a.disabled .icon { color: #c4c4c4; }
-.drawer-section-title { padding: 14px 24px 6px; font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-.drawer-footer { padding: 16px 24px; border-top: 1px solid var(--border); }
-.drawer-login-btn { width: 100%; padding: 12px; background: var(--blue); color: white; border-radius: 8px; font-size: 14px; font-weight: 500; transition: background .15s; font-family: inherit; cursor: pointer; border: none; }
-.drawer-login-btn:hover { background: var(--blue-deep); }
+.drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 300px; max-width: 88vw; background: var(--card); z-index: 101; display: flex; flex-direction: column; box-shadow: var(--sh-xl); transform: translateX(-100%); transition: transform .3s var(--ease); }
+.drawer.open { transform: none; }
+.drawer-head { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.drawer-head .t { font-size: 17px; font-weight: 700; }
+.drawer-x { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-3); font-size: 20px; transition: all var(--dur); }
+.drawer-x:hover { background: var(--bg); color: var(--text); }
+.drawer-user { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.d-ava { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--bg); }
+.d-ava img, .d-ava svg { width: 100%; height: 100%; object-fit: cover; }
+.d-name { font-size: 14.5px; font-weight: 600; }
+.d-sub  { font-size: 12px; color: var(--text-3); }
+.drawer-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+.d-section { padding: 12px 22px 4px; font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.drawer-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 22px; font-size: 14.5px; color: var(--text); cursor: pointer; transition: background var(--dur); }
+.drawer-nav a:hover { background: var(--bg); }
+.drawer-nav a.dis { color: var(--text-3); cursor: not-allowed; }
+.drawer-nav a.dis:hover { background: transparent; }
+.d-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-2); flex-shrink: 0; }
+.drawer-nav a.dis .d-icon { color: var(--text-3); }
+.drawer-foot { padding: 16px 22px; border-top: 1px solid var(--border); }
+.login-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--blue), #3b82f6); color: #fff; border-radius: var(--r-btn); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; box-shadow: 0 4px 12px var(--blue-glow); transition: all var(--dur); }
+.login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--blue-glow); }
 
-/* ============ MOBILE ============ */
+/* ═══════════════ STATES ═══════════════ */
+.empty-state { text-align: center; padding: 64px 24px; color: var(--text-3); font-size: 14.5px; }
+.spinner { text-align: center; padding: 48px; }
+.spinner::after { content: ''; display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
 @media (max-width: 768px) {
   .nav-inner { gap: 14px; padding: 12px 16px; }
-  .nav-link-hideable { display: none; }
-  .nav-links { gap: 16px; font-size: 14.5px; }
-  .nav-links.menu-open { position: absolute; top: 100%; left: 0; right: 0; background: white; border-bottom: 1px solid var(--border); flex-direction: column; padding: 16px 22px; align-items: flex-start; gap: 14px; }
-  .nav-links.menu-open .nav-link-hideable { display: block; }
-  .dates-bar { padding: 16px 16px 12px; }
-  .tags-bar { padding: 0 16px 8px; }
-  .time-label { padding: 18px 16px 12px; font-size: 18px; }
-  .games-row { padding: 0 16px; }
+  .nav-lh { display: none; }
+  .nav-links { gap: 16px; font-size: 14px; }
+  .dates-inner { padding: 14px 16px; }
+  .tags-inner, .time-heading, .games-grid, .sec { padding-left: 16px; padding-right: 16px; }
+  .admin-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .stat-col + .stat-col { border-left: none; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ============ DEBUG BANNER ============ -->
-<div class="debug-banner" id="debugBanner">
-  <span class="dot yellow"></span>
-  <span id="debugText">Инициализация...</span>
+<div class="status-bar connecting" id="statusBar">
+  <span class="dot"></span><span id="statusTxt">Инициализация...</span>
 </div>
 
 <nav class="nav">
   <div class="nav-inner">
-    <button class="burger" onclick="openDrawer()" aria-label="Меню">
-      <span></span><span></span><span></span>
-    </button>
+    <button class="burger" onclick="openDrawer()"><span></span><span></span><span></span></button>
     <div class="nav-links">
-      <a href="#" class="active" onclick="event.preventDefault(); goHome()">Клуб</a>
-      <a href="#schedule" onclick="event.preventDefault(); goToSchedule()">Расписание</a>
-      <a class="disabled nav-link-hideable" onclick="event.preventDefault()">Турниры</a>
-      <a class="disabled nav-link-hideable" onclick="event.preventDefault()">Общение</a>
-      <a class="disabled nav-link-hideable" onclick="event.preventDefault()">Новости</a>
+      <a onclick="goToAbout()">Клуб</a>
+      <a onclick="goToSchedule()">Расписание</a>
+      <a class="disabled nav-lh">Турниры</a>
+      <a class="disabled nav-lh">Общение</a>
+      <a class="disabled nav-lh">Новости</a>
     </div>
     <div class="nav-spacer"></div>
-    <div class="nav-avatar" id="navAvatar" onclick="showProfile()"></div>
+    <div class="nav-avatar" id="navAva" onclick="showProfile()"></div>
   </div>
 </nav>
 
-<!-- ============ DRAWER ============ -->
-<div class="drawer-bg" id="drawerBg" onclick="closeDrawer()"></div>
+<!-- DRAWER -->
+<div class="drawer-bg" id="dBg" onclick="closeDrawer()"></div>
 <aside class="drawer" id="drawer">
-  <div class="drawer-header">
-    <div class="title">Меню</div>
-    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  <div class="drawer-head">
+    <div class="t">Меню</div>
+    <button class="drawer-x" onclick="closeDrawer()">×</button>
   </div>
   <div class="drawer-user">
-    <div class="avatar" id="drawerAvatar"></div>
-    <div class="meta">
-      <div class="name">Гость</div>
-      <div class="sub">Войдите, чтобы записываться</div>
-    </div>
+    <div class="d-ava" id="dAva"></div>
+    <div><div class="d-name">Гость</div><div class="d-sub">Войдите, чтобы записываться</div></div>
   </div>
   <nav class="drawer-nav">
-    <div class="drawer-section-title">Навигация</div>
-    <a onclick="closeDrawer(); goHome()">
-      <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-      Клуб
-    </a>
-    <a onclick="closeDrawer(); goToSchedule()">
-      <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
-      Расписание
-    </a>
-    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6-6 6 6"/><path d="M4 22h16"/><path d="M12 3v17"/></svg></span>Турниры</a>
-    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Общение</a>
-    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8M18 10h-8"/></svg></span>Новости</a>
-    <div class="drawer-section-title">Профиль</div>
-    <a onclick="showProfile()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Мой профиль</a>
-    <a class="disabled"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Мои записи</a>
-    <div class="drawer-section-title">Прочее</div>
-    <a onclick="closeDrawer(); goToAbout()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>О клубе</a>
-    <a onclick="closeDrawer(); goToContacts()"><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>Контакты</a>
-    <!-- В drawer-nav, после "Контакты" -->
-<div class="drawer-section-title">Администрирование</div>
-<a onclick="closeDrawer(); openAdmin()">
-  <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-  Админ-панель
-</a>
+    <div class="d-section">Навигация</div>
+    <a onclick="closeDrawer(); goToAbout()"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>Клуб</a>
+    <a onclick="closeDrawer(); goToSchedule()"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Расписание</a>
+    <a class="dis"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6-6 6 6"/><path d="M4 22h16"/><path d="M12 3v17"/></svg></span>Турниры</a>
+    <a class="dis"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Общение</a>
+    <a class="dis"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg></span>Новости</a>
+    <div class="d-section">Профиль</div>
+    <a onclick="closeDrawer(); showProfile()"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Мой профиль</a>
+    <a class="dis"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Мои записи</a>
+    <div class="d-section">Прочее</div>
+    <a onclick="closeDrawer(); goToContacts()"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>Контакты</a>
+    <div class="d-section">Администрирование</div>
+    <a onclick="closeDrawer(); openAdmin()"><span class="d-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Админ-панель</a>
   </nav>
-  <div class="drawer-footer">
-    <button class="drawer-login-btn" onclick="alert('Скоро: вход через Telegram')">Войти</button>
+  <div class="drawer-foot">
+    <button class="login-btn" onclick="alert('Скоро: вход через Telegram')">Войти</button>
   </div>
 </aside>
 
-<div id="main-view">
-
-<div class="dates-wrapper">
-  <div class="dates-bar">
-    <div class="dates-arrow" onclick="shiftDates(-1)">‹</div>
-    <div class="dates-scroll" id="datesScroll"></div>
-    <div class="dates-arrow" onclick="shiftDates(1)">›</div>
-  </div>
-</div>
-
-<div class="tags-wrapper">
-  <div class="tags-bar" id="tagsBar">
-    <button class="tag-pill active" data-type="all" onclick="filterByTag(this, 'all')">Все</button>
-    <button class="tag-pill" data-type="city_mafia" onclick="filterByTag(this, 'city_mafia')">Городская мафия</button>
-    <button class="tag-pill" data-type="dice" onclick="filterByTag(this, 'dice')">Кубики</button>
-    <button class="tag-pill" data-type="sport_mafia" onclick="filterByTag(this, 'sport_mafia')">Спортивная мафия</button>
-  </div>
-</div>
-
-<main id="schedule" style="padding-bottom: 24px;">
-  <div id="schedule-content">
-    <div class="loading-spinner"></div>
-  </div>
-</main>
-
-<section class="about-section">
-  <div class="about-inner">
-    <h2>О нас</h2>
-    <div class="about-card">
-      <div class="about-logo">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#ec4899"/>
-              <stop offset="50%" stop-color="#a855f7"/>
-              <stop offset="100%" stop-color="#3b82f6"/>
-            </linearGradient>
-          </defs>
-          <path d="M100 30 L 160 60 L 160 130 Q 160 165 100 180 Q 40 165 40 130 L 40 60 Z" fill="none" stroke="url(#lg1)" stroke-width="3"/>
-          <text x="100" y="115" text-anchor="middle" font-family="Inter, sans-serif" font-size="28" font-weight="900" fill="url(#lg1)">MAFIA</text>
-        </svg>
-      </div>
-      <div class="about-info">
-        <div class="about-founder">
-          <div class="photo" id="founderPhoto"></div>
-          <div class="data">
-            <div class="name">Таисия</div>
-            <div class="role">Королева Англии</div>
-          </div>
-        </div>
-        <p>Основательница и бессменный лидер игрового клуба. С 2015 года прошла путь от яркого стримера до признанного визионера киберспорта.</p>
-        <p class="motto">Её девиз: «Играть с достоинством — побеждать как королева».</p>
-        <div class="about-team-row">
-          <div class="person"><div class="photo" id="t1"></div><div class="name">Швед</div><div class="role">Принц Англии</div></div>
-          <div class="person"><div class="photo" id="t2"></div><div class="name">Дядя Коля</div><div class="role">Кардинал Ришелье</div></div>
-          <div class="person"><div class="photo" id="t3"></div><div class="name">Дядя Боря</div><div class="role">Люцифер</div></div>
-        </div>
-        <p>Сплочённый отряд профессионалов.</p>
-      </div>
+<!-- MAIN VIEW -->
+<div id="mainView">
+  <div class="dates-strip" id="schedAnchor">
+    <div class="dates-inner">
+      <button class="arrow-btn" onclick="shiftDates(-1)">‹</button>
+      <div class="dates-grid" id="datesGrid"></div>
+      <button class="arrow-btn" onclick="shiftDates(1)">›</button>
     </div>
-
-    <h2 class="hosts-title">Ведущие</h2>
-    <div class="hosts-list" id="hostsList"></div>
-
-    <button class="order-btn" onclick="alert('Скоро: форма заказа корпоративной игры')">Заказать игру</button>
-
-    <h2 class="reviews-title">Отзывы</h2>
-    <div id="reviewsList"></div>
   </div>
-</section>
 
-</div><!-- /main-view -->
-
-<!-- ============ PROFILE VIEW ============ -->
-<section id="profile-view" class="profile-view">
-  <div class="profile-back">
-    <a onclick="showMainView()">← Назад</a>
+  <div class="tags-strip">
+    <div class="tags-inner">
+      <button class="tag-btn active" data-t="all"        onclick="filterTag(this,'all')">Все</button>
+      <button class="tag-btn"        data-t="city_mafia" onclick="filterTag(this,'city_mafia')">Городская мафия</button>
+      <button class="tag-btn"        data-t="dice"       onclick="filterTag(this,'dice')">Кубики</button>
+      <button class="tag-btn"        data-t="sport_mafia"onclick="filterTag(this,'sport_mafia')">Спортивная мафия</button>
+    </div>
   </div>
-  <div class="profile-grid">
-    <div class="profile-left">
-      <div class="profile-badge-block">
-        <svg class="profile-badge-shield" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="shieldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a02828"/><stop offset="100%" stop-color="#6b1818"/></linearGradient></defs>
-          <path d="M4 8 L32 4 L60 8 L60 50 Q60 70 32 78 Q4 70 4 50 Z" fill="url(#shieldG)" stroke="#5b1414" stroke-width="1.5"/>
-          <g transform="translate(32, 36)" fill="#f5b942">
-            <path d="M-14 -6 L-8 -2 L-3 -10 L0 -2 L3 -10 L8 -2 L14 -6 L12 6 L-12 6 Z"/>
+
+  <main style="padding-bottom:32px;">
+    <div id="schedContent"><div class="spinner"></div></div>
+  </main>
+
+  <section class="about-section" id="aboutAnchor">
+    <div class="about-inner">
+      <div class="section-title">О нас</div>
+      <div class="about-card">
+        <div class="about-logo">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ec4899"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#3b82f6"/>
+            </linearGradient></defs>
+            <path d="M100 30L160 60L160 130Q160 165 100 180Q40 165 40 130L40 60Z" fill="none" stroke="url(#lg1)" stroke-width="3"/>
+            <text x="100" y="115" text-anchor="middle" font-family="Inter,sans-serif" font-size="28" font-weight="900" fill="url(#lg1)">MAFIA</text>
+          </svg>
+        </div>
+        <div class="about-info">
+          <div class="founder-row">
+            <div class="founder-ava" id="fAva"></div>
+            <div><div class="founder-name">Таисия</div><div class="founder-role">Королева Англии</div></div>
+          </div>
+          <p>Основательница и бессменный лидер игрового клуба. С 2015 года прошла путь от яркого стримера до признанного визионера. Обладая харизмой и стратегическим мышлением, Таисия создала пространство, где талант превращается в победы.</p>
+          <p class="motto">«Играть с достоинством — побеждать как королева».</p>
+          <div class="team-row">
+            <div class="team-person"><div class="team-ava" id="tAva1"></div><div class="team-name">Швед</div><div class="team-role">Принц Англии</div></div>
+            <div class="team-person"><div class="team-ava" id="tAva2"></div><div class="team-name">Дядя Коля</div><div class="team-role">Кардинал</div></div>
+            <div class="team-person"><div class="team-ava" id="tAva3"></div><div class="team-name">Дядя Боря</div><div class="team-role">Люцифер</div></div>
+          </div>
+          <p>Сплочённый отряд профессионалов, который за шесть лет превратился в грозную силу российского и международного киберспорта.</p>
+        </div>
+      </div>
+
+      <div class="section-title">Ведущие</div>
+      <div class="hosts-row" id="hostsList"></div>
+
+      <button class="order-cta" onclick="alert('Скоро: форма заказа корпоративной игры')">Заказать игру</button>
+
+      <div class="section-title" style="margin-top:40px;">Отзывы</div>
+      <div class="reviews-list" id="reviewsList"></div>
+    </div>
+  </section>
+</div><!-- /mainView -->
+
+<!-- PROFILE VIEW -->
+<section class="profile-view" id="profileView">
+  <a class="back-link" onclick="showMain()">← Назад</a>
+  <div class="profile-layout">
+    <div style="display:flex;flex-direction:column;gap:28px;padding-top:6px;">
+      <div class="badge-block">
+        <svg class="badge-svg" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="shG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a02828"/><stop offset="100%" stop-color="#6b1818"/></linearGradient></defs>
+          <path d="M4 8L32 4L60 8L60 50Q60 70 32 78Q4 70 4 50Z" fill="url(#shG)" stroke="#5b1414" stroke-width="1.5"/>
+          <g transform="translate(32,36)" fill="#f5b942">
+            <path d="M-14-6L-8-2L-3-10L0-2L3-10L8-2L14-6L12 6L-12 6Z"/>
             <circle cx="-10" cy="-6" r="2.5"/><circle cx="0" cy="-10" r="2.5"/><circle cx="10" cy="-6" r="2.5"/>
             <rect x="-13" y="8" width="26" height="2"/>
           </g>
         </svg>
-        <span class="profile-badge-label" id="pf-badge">Цари</span>
+        <span class="badge-lbl" id="pfBadge">Цари</span>
       </div>
-      <div class="profile-name-block">
-        <h1 id="pf-name" onclick="editProfileField('name')">Всеволод</h1>
-        <span class="pf-title" id="pf-title" onclick="editProfileField('title')">Мистер Икс</span>
-        <span class="pf-star" id="pf-star" onclick="editProfileField('star')">звезда</span>
+      <div class="pf-name-block">
+        <h1 id="pfName" onclick="editPF('name')">Всеволод</h1>
+        <div class="pf-role-txt" id="pfTitle" onclick="editPF('title')">Мистер Икс</div>
+        <div class="pf-badge-tag" id="pfStar" onclick="editPF('star')">звезда</div>
       </div>
     </div>
-    <div class="profile-center">
-      <label class="profile-avatar-big" id="pf-avatar" style="background-image: url('avatar-vsevolod.png');">
-        <input type="file" accept="image/*" onchange="onAvatarUpload(event)">
-        <div class="upload-hint">Загрузить фото</div>
+    <div class="pf-center">
+      <label class="pf-avatar" id="pfAva" style="background-image:url('avatar-vsevolod.png')">
+        <input type="file" accept="image/*" onchange="uploadAvatar(event)">
+        <div class="upload-hint">📷 Изменить фото</div>
       </label>
-      <div class="profile-medals">
-        <div class="medal-item">
-          <div class="medal-icon medal-gold"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7z"/></svg></div>
-          <div class="medal-label">Чемпион 2026<br>Городская мафия</div>
+      <div class="medals-row">
+        <div class="medal">
+          <div class="medal-ico m-gold"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7z"/></svg></div>
+          <div class="medal-lbl">Чемпион 2026<br>Городская мафия</div>
         </div>
-        <div class="medal-item">
-          <div class="medal-icon medal-green"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r="6"/><path d="M8 14l-2 8 6-3 6 3-2-8z"/></svg></div>
-          <div class="medal-label">Чемпион 2026<br>Спортивная мафия</div>
+        <div class="medal">
+          <div class="medal-ico m-green"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="9" r="6"/><path d="M8 14l-2 8 6-3 6 3-2-8z"/></svg></div>
+          <div class="medal-lbl">Чемпион 2026<br>Спортивная мафия</div>
         </div>
-        <div class="medal-item">
-          <div class="medal-icon medal-pink"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg></div>
-          <div class="medal-label">Любимец<br>публики</div>
+        <div class="medal">
+          <div class="medal-ico m-pink"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg></div>
+          <div class="medal-lbl">Любимец<br>публики</div>
         </div>
       </div>
     </div>
-    <div class="profile-right">
-      <button class="profile-btn green">Друзья</button>
-      <button class="profile-btn blue">Написать</button>
-      <button class="profile-btn blue">Оплатить игру</button>
+    <div class="pf-actions">
+      <button class="pf-btn green">Друзья</button>
+      <button class="pf-btn blue">Написать</button>
+      <button class="pf-btn blue">Оплатить игру</button>
     </div>
   </div>
-  <div class="profile-stats-wrap">
-    <div class="profile-stats">
+  <div class="stats-strip">
+    <div class="stats-grid">
       <div class="stat-col">
-        <div class="stat-title">Городская мафия</div>
-        <div class="stat-numbers">
-          <div class="stat-block"><div class="stat-num" id="pf-cm-games">15</div><div class="stat-label">игр</div></div>
-          <div class="stat-block"><div class="stat-num" id="pf-cm-wins">10</div><div class="stat-label">побед</div></div>
-        </div>
-      </div>
-      <div class="stat-col">
-        <div class="stat-title">Спортивная мафия</div>
-        <div class="stat-numbers">
-          <div class="stat-block"><div class="stat-num" id="pf-sm-games">55</div><div class="stat-label">игр</div></div>
-          <div class="stat-block"><div class="stat-num" id="pf-sm-wins">32</div><div class="stat-label">побед</div></div>
+        <div class="stat-head">Городская мафия</div>
+        <div class="stat-nums">
+          <div><div class="stat-num" id="pCMg">15</div><div class="stat-lbl">игр</div></div>
+          <div><div class="stat-num" id="pCMw">10</div><div class="stat-lbl">побед</div></div>
         </div>
       </div>
       <div class="stat-col">
-        <div class="stat-title">Кубики</div>
-        <div class="stat-numbers">
-          <div class="stat-block"><div class="stat-num" id="pf-d-games">2</div><div class="stat-label">игр</div></div>
-          <div class="stat-block"><div class="stat-num" id="pf-d-wins">0</div><div class="stat-label">побед</div></div>
+        <div class="stat-head">Спортивная мафия</div>
+        <div class="stat-nums">
+          <div><div class="stat-num" id="pSMg">55</div><div class="stat-lbl">игр</div></div>
+          <div><div class="stat-num" id="pSMw">32</div><div class="stat-lbl">побед</div></div>
+        </div>
+      </div>
+      <div class="stat-col">
+        <div class="stat-head">Кубики</div>
+        <div class="stat-nums">
+          <div><div class="stat-num" id="pDg">2</div><div class="stat-lbl">игр</div></div>
+          <div><div class="stat-num" id="pDw">0</div><div class="stat-lbl">побед</div></div>
         </div>
       </div>
     </div>
-  </div>
-</section>
-  <!-- Добавьте после #profile-view -->
-<section id="game-detail-view" class="game-detail-view">
-  <div class="profile-back">
-    <a onclick="showMainView()">← Назад</a>
-  </div>
-  <div class="game-detail-card">
-    <div class="game-detail-cover" id="gdCover"></div>
-    <div class="game-detail-info">
-      <h2 id="gdTitle">Городская мафия</h2>
-      <div class="game-detail-meta">
-        <span id="gdTime">19:00 — 00:45</span>
-        <span class="game-detail-price" id="gdPrice">5 500₽</span>
-      </div>
-      <div class="game-detail-location" id="gdLocation"></div>
-      <div class="game-detail-hosts" id="gdHosts"></div>
-    </div>
-  </div>
-  <div class="game-detail-players">
-    <h3>Участники (<span id="gdPlayersCount">14</span>/<span id="gdPlayersMax">16</span>)</h3>
-    <div id="gdPlayersList"></div>
   </div>
 </section>
 
-<footer>
-  <div class="brand-row">Mafia Club</div>
+<!-- GAME DETAIL VIEW -->
+<section class="gd-view" id="gdView">
+  <a class="back-link" onclick="showMain()">← Назад</a>
+  <div class="gd-card">
+    <div class="gd-cover" id="gdCover"></div>
+    <div class="gd-info">
+      <h2 id="gdTitle">-</h2>
+      <div class="gd-meta"><span id="gdTime">-</span><span class="gd-price" id="gdPrice">-</span></div>
+      <div class="gd-loc" id="gdLoc">-</div>
+      <div class="gd-hosts" id="gdHosts"></div>
+    </div>
+  </div>
+  <div class="gd-players">
+    <h3>Участники (<span id="gdCnt">0</span>/<span id="gdMax">0</span>)</h3>
+    <div id="gdList"></div>
+  </div>
+</section>
+
+<!-- ADMIN VIEW -->
+<section class="admin-view" id="adminView">
+  <div class="admin-head">
+    <h1>⚙️ Админ-панель</h1>
+    <button class="admin-exit" onclick="closeAdmin()">Выйти</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="a-tab active" onclick="switchTab(this,'tabGames')">🎮 Игры</button>
+    <button class="a-tab" onclick="switchTab(this,'tabHosts')">👤 Ведущие</button>
+    <button class="a-tab" onclick="switchTab(this,'tabImages')">🖼 Картинки</button>
+  </div>
+
+  <div id="tabGames" class="admin-pane">
+    <button class="btn-primary" style="width:auto;padding:10px 20px;" onclick="openGameForm()">+ Добавить игру</button>
+    <div id="adminGames" class="admin-items"></div>
+  </div>
+
+  <div id="tabHosts" class="admin-pane" style="display:none;">
+    <button class="btn-primary" style="width:auto;padding:10px 20px;" onclick="openHostForm()">+ Добавить ведущего</button>
+    <div id="adminHosts" class="admin-items"></div>
+  </div>
+
+  <div id="tabImages" class="admin-pane" style="display:none;">
+    <div class="upload-zone">
+      <h3>Загрузить картинку в Supabase Storage</h3>
+      <input type="file" id="imgFile" accept="image/*" style="margin-bottom:10px;">
+      <button class="btn-primary" style="width:auto;padding:9px 18px;" onclick="uploadImg()">Загрузить</button>
+      <div class="upload-status" id="imgStatus"></div>
+    </div>
+    <div id="adminImages" class="img-grid"></div>
+  </div>
+</section>
+
+<footer id="contactsAnchor">
+  <div class="foot-brand">Mafia Club</div>
   <div>г. Москва, Большой Путинковский пер., 5 · @mafia_club_bot</div>
-  <div style="margin-top: 6px;">© 2026 Mafia Club</div>
+  <div style="margin-top:6px;">© 2026 Mafia Club</div>
 </footer>
 
-<div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()">×</button>
-    <h2>Запись на игру</h2>
-    <h3 id="mTitle">Городская мафия</h3>
-    <div class="modal-meta" id="mMeta">Сегодня 22:00 — 00:30</div>
-    <div class="modal-tabs">
+<!-- REGISTRATION MODAL -->
+<div class="overlay" id="regOverlay">
+  <div class="modal-box">
+    <button class="modal-x" onclick="closeReg()">×</button>
+    <div class="modal-kicker">Запись на игру</div>
+    <div class="modal-title" id="rTitle">Городская мафия</div>
+    <div class="modal-sub" id="rSub">-</div>
+    <div class="tabs">
       <button class="active">Один игрок</button>
       <button>+ 1 игрок</button>
-      <button>Своей компанией</button>
+      <button>Компанией</button>
     </div>
-    <div class="modal-inputs">
-      <input type="text" id="mName" placeholder="Ваше имя">
-      <input type="text" id="mPhone" placeholder="+7 (___) ___-__-__">
+    <div class="inputs">
+      <input type="text" id="rName" placeholder="Ваше имя">
+      <input type="text" id="rPhone" placeholder="+7 (___) ___-__-__">
     </div>
     <div class="table-wrap" id="tableWrap">
       <div class="table-center">Выбор места<br>за столом</div>
     </div>
-    <div class="checkbox-row">
+    <div class="checks">
       <label><input type="checkbox"> Абонемент</label>
       <label>Промокод <input type="text" placeholder=""></label>
     </div>
-    <button class="btn-primary" id="bookBtn" disabled onclick="confirmBooking()">Записаться</button>
-    <button class="btn-secondary" onclick="closeModal()">Возможно буду</button>
-    <p class="legal">Нажимая на кнопку, вы принимаете <a href="#">пользовательское соглашение</a> и даёте согласие на обработку персональных данных</p>
+    <button class="btn-primary" id="regBtn" disabled onclick="doRegister()">Записаться</button>
+    <button class="btn-outline" style="margin-top:0;" onclick="closeReg()">Возможно буду</button>
+    <p class="legal">Нажимая «Записаться», вы принимаете <a href="#">соглашение</a> и <a href="#">политику конфиденциальности</a></p>
   </div>
 </div>
-// ====== ADMIN PANEL ======
-const ADMIN_PASSWORD = 'mafia2026'; // Измените на свой пароль
 
-function openAdmin() {
-  const pass = prompt('Введите пароль администратора:');
-  if (pass !== ADMIN_PASSWORD) {
-    alert('Неверный пароль');
-    return;
-  }
-  
-  document.getElementById('main-view').style.display = 'none';
-  document.getElementById('profile-view').style.display = 'none';
-  document.getElementById('game-detail-view').style.display = 'none';
-  document.getElementById('admin-view').style.display = 'block';
-  
-  loadAdminData();
-  window.scrollTo({ top: 0 });
-}
-
-function closeAdmin() {
-  document.getElementById('admin-view').style.display = 'none';
-  showMainView();
-}
-
-function switchAdminTab(tab) {
-  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  
-  document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
-  document.getElementById('admin-' + tab).style.display = 'block';
-}
-
-async function loadAdminData() {
-  await loadAdminGames();
-  await loadAdminHosts();
-  await loadAdminImages();
-}
-
-// ====== ИГРЫ ======
-async function loadAdminGames() {
-  const list = document.getElementById('adminGamesList');
-  list.innerHTML = '<div class="loading-spinner"></div>';
-  
-  try {
-    let games = [];
-    if (sb) {
-      const { data, error } = await sb.from('games').select('*').order('start_at');
-      if (error) throw error;
-      games = data || [];
-    } else {
-      // Демо
-      games = buildDemoGames(today);
-    }
-    
-    if (!games.length) {
-      list.innerHTML = '<p style="text-align:center;color:#999;">Нет игр</p>';
-      return;
-    }
-    
-    list.innerHTML = games.map(g => `
-      <div class="admin-item">
-        <div class="admin-item-info">
-          <h3>${g.title || typeLabel(g.game_type)}</h3>
-          <p>${formatDateLabel(new Date(g.start_at))} · ${formatTime(g.start_at)} · ${g.price}₽</p>
-        </div>
-        <div class="admin-item-actions">
-          <button class="edit" onclick="editGame('${g.id}')">Редактировать</button>
-          <button class="delete" onclick="deleteGame('${g.id}')">Удалить</button>
-        </div>
+<!-- GAME FORM MODAL -->
+<div class="overlay" id="gameFormOverlay">
+  <div class="modal-box" style="max-width:520px;">
+    <button class="modal-x" onclick="closeGameForm()">×</button>
+    <div class="modal-title" id="gfTitle">Новая игра</div>
+    <form onsubmit="saveGame(event)" style="margin-top:20px;">
+      <input type="hidden" id="gfId">
+      <div class="form-group"><label>Название</label><input id="gfName" placeholder="Царский" required></div>
+      <div class="form-group"><label>Подзаголовок</label><input id="gfSub" placeholder="Великолепный праздник..."></div>
+      <div class="form-group"><label>Тип</label>
+        <select id="gfType">
+          <option value="city_mafia">Городская мафия</option>
+          <option value="sport_mafia">Спортивная мафия</option>
+          <option value="dice">Кубики</option>
+          <option value="other">Другое</option>
+        </select>
       </div>
-    `).join('');
-    
-  } catch (e) {
-    list.innerHTML = '<p style="color:red;">Ошибка загрузки: ' + e.message + '</p>';
-  }
-}
-
-function showGameForm(id = null) {
-  document.getElementById('gameFormTitle').textContent = id ? 'Редактировать игру' : 'Новая игра';
-  document.getElementById('gameForm').reset();
-  document.getElementById('gameId').value = id || '';
-  
-  // Загрузить ведущих в select
-  loadHostsSelect();
-  
-  if (id) {
-    const g = allLoadedGames.find(x => String(x.id) === String(id));
-    if (g) {
-      document.getElementById('gameTitle').value = g.title || '';
-      document.getElementById('gameSubtitle').value = g.subtitle || '';
-      document.getElementById('gameType').value = g.game_type || 'city_mafia';
-      document.getElementById('gameStart').value = new Date(g.start_at).toISOString().slice(0, 16);
-      document.getElementById('gameEnd').value = new Date(g.end_at).toISOString().slice(0, 16);
-      document.getElementById('gameLocation').value = g.location || '';
-      document.getElementById('gamePrice').value = g.price || 1500;
-      document.getElementById('gameMaxSeats').value = g.max_seats || 10;
-      document.getElementById('gameCover').value = g.cover_image_url || '';
-    }
-  }
-  
-  document.getElementById('adminGameModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeGameForm() {
-  document.getElementById('adminGameModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-async function saveGame(e) {
-  e.preventDefault();
-  
-  const id = document.getElementById('gameId').value;
-  const data = {
-    title: document.getElementById('gameTitle').value,
-    subtitle: document.getElementById('gameSubtitle').value || null,
-    game_type: document.getElementById('gameType').value,
-    start_at: new Date(document.getElementById('gameStart').value).toISOString(),
-    end_at: new Date(document.getElementById('gameEnd').value).toISOString(),
-    location: document.getElementById('gameLocation').value,
-    price: parseInt(document.getElementById('gamePrice').value),
-    max_seats: parseInt(document.getElementById('gameMaxSeats').value),
-    cover_image_url: document.getElementById('gameCover').value || null,
-    host_id: document.getElementById('gameHost').value || null,
-  };
-  
-  if (!sb) {
-    alert('Демо-режим: данные не сохраняются в БД');
-    closeGameForm();
-    return;
-  }
-  
-  try {
-    let result;
-    if (id) {
-      result = await sb.from('games').update(data).eq('id', id);
-    } else {
-      result = await sb.from('games').insert(data);
-    }
-    
-    if (result.error) throw result.error;
-    
-    alert('Игра сохранена!');
-    closeGameForm();
-    loadAdminGames();
-    loadGames();
-    
-  } catch (e) {
-    alert('Ошибка: ' + e.message);
-  }
-}
-
-async function deleteGame(id) {
-  if (!confirm('Удалить игру?')) return;
-  
-  if (!sb) {
-    alert('Демо-режим: удаление недоступно');
-    return;
-  }
-  
-  try {
-    const { error } = await sb.from('games').delete().eq('id', id);
-    if (error) throw error;
-    
-    alert('Игра удалена');
-    loadAdminGames();
-    loadGames();
-    
-  } catch (e) {
-    alert('Ошибка: ' + e.message);
-  }
-}
-
-function editGame(id) {
-  showGameForm(id);
-}
-
-// ====== ВЕДУЩИЕ ======
-async function loadAdminHosts() {
-  const list = document.getElementById('adminHostsList');
-  list.innerHTML = '<div class="loading-spinner"></div>';
-  
-  try {
-    let hosts = [];
-    if (sb) {
-      const { data, error } = await sb.from('hosts').select('*').order('name');
-      if (error) throw error;
-      hosts = data || [];
-    } else {
-      hosts = [
-        { id: 1, name: 'Дядя Коля', role: 'мастер' },
-        { id: 2, name: 'Дядя Боря', role: 'ведущий' },
-        { id: 3, name: 'Артём', role: 'ведущий' },
-      ];
-    }
-    
-    if (!hosts.length) {
-      list.innerHTML = '<p style="text-align:center;color:#999;">Нет ведущих</p>';
-      return;
-    }
-    
-    list.innerHTML = hosts.map(h => `
-      <div class="admin-item">
-        <div class="admin-item-info">
-          <h3>${h.name}</h3>
-          <p>${h.role}</p>
-        </div>
-        <div class="admin-item-actions">
-          <button class="edit" onclick="editHost('${h.id}')">Редактировать</button>
-          <button class="delete" onclick="deleteHost('${h.id}')">Удалить</button>
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group"><label>Начало</label><input type="datetime-local" id="gfStart" required></div>
+        <div class="form-group"><label>Конец</label><input type="datetime-local" id="gfEnd" required></div>
       </div>
-    `).join('');
-    
-  } catch (e) {
-    list.innerHTML = '<p style="color:red;">Ошибка: ' + e.message + '</p>';
-  }
-}
-
-async function loadHostsSelect() {
-  const select = document.getElementById('gameHost');
-  try {
-    let hosts = [];
-    if (sb) {
-      const { data } = await sb.from('hosts').select('*').order('name');
-      hosts = data || [];
-    } else {
-      hosts = [
-        { id: 1, name: 'Дядя Коля' },
-        { id: 2, name: 'Дядя Боря' },
-        { id: 3, name: 'Артём' },
-      ];
-    }
-    select.innerHTML = '<option value="">Выберите ведущего</option>' + 
-      hosts.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
-  } catch (e) {
-    select.innerHTML = '<option>Ошибка загрузки</option>';
-  }
-}
-
-function showHostForm(id = null) {
-  document.getElementById('hostFormTitle').textContent = id ? 'Редактировать ведущего' : 'Новый ведущий';
-  document.getElementById('hostForm').reset();
-  document.getElementById('hostId').value = id || '';
-  
-  // TODO: загрузить данные если редактирование
-  
-  document.getElementById('adminHostModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeHostForm() {
-  document.getElementById('adminHostModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-async function saveHost(e) {
-  e.preventDefault();
-  
-  const id = document.getElementById('hostId').value;
-  const data = {
-    name: document.getElementById('hostName').value,
-    role: document.getElementById('hostRole').value,
-    photo_url: document.getElementById('hostPhoto').value || null,
-  };
-  
-  if (!sb) {
-    alert('Демо-режим: данные не сохраняются');
-    closeHostForm();
-    return;
-  }
-  
-  try {
-    let result;
-    if (id) {
-      result = await sb.from('hosts').update(data).eq('id', id);
-    } else {
-      result = await sb.from('hosts').insert(data);
-    }
-    
-    if (result.error) throw result.error;
-    
-    alert('Ведущий сохранён!');
-    closeHostForm();
-    loadAdminHosts();
-    
-  } catch (e) {
-    alert('Ошибка: ' + e.message);
-  }
-}
-
-async function deleteHost(id) {
-  if (!confirm('Удалить ведущего?')) return;
-  
-  if (!sb) {
-    alert('Демо-режим');
-    return;
-  }
-  
-  try {
-    const { error } = await sb.from('hosts').delete().eq('id', id);
-    if (error) throw error;
-    alert('Удалено');
-    loadAdminHosts();
-  } catch (e) {
-    alert('Ошибка: ' + e.message);
-  }
-}
-
-function editHost(id) {
-  showHostForm(id);
-}
-
-// ====== КАРТИНКИ ======
-async function loadAdminImages() {
-  const grid = document.getElementById('adminImagesList');
-  grid.innerHTML = '<div class="loading-spinner"></div>';
-  
-  if (!sb) {
-    grid.innerHTML = '<p style="text-align:center;color:#999;">Демо-режим: загрузка картинок недоступна</p>';
-    return;
-  }
-  
-  try {
-    const { data, error } = await sb.storage.from('images').list();
-    if (error) throw error;
-    
-    if (!data || !data.length) {
-      grid.innerHTML = '<p style="text-align:center;color:#999;">Нет загруженных картинок</p>';
-      return;
-    }
-    
-    const images = await Promise.all(
-      data.map(async file => {
-        const { data: urlData } = await sb.storage.from('images').getPublicUrl(file.name);
-        return { name: file.name, url: urlData.publicUrl };
-      })
-    );
-    
-    grid.innerHTML = images.map(img => `
-      <div class="admin-image-card">
-        <img src="${img.url}" alt="${img.name}">
-        <div class="admin-image-copy" onclick="copyImageUrl('${img.url}')">Копировать URL</div>
-        <div class="admin-image-url">${img.url}</div>
+      <div class="form-group"><label>Адрес</label><input id="gfLoc" value="Библиотека (Большой Путинковский пер., 5, м. Пушкинская)"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group"><label>Цена ₽</label><input type="number" id="gfPrice" value="1500"></div>
+        <div class="form-group"><label>Мест</label><input type="number" id="gfSeats" value="10"></div>
       </div>
-    `).join('');
-    
-  } catch (e) {
-    grid.innerHTML = '<p style="color:red;">Ошибка: ' + e.message + '</p>';
-  }
-}
+      <div class="form-group"><label>Ведущий</label><select id="gfHost"></select></div>
+      <div class="form-group"><label>URL обложки</label><input id="gfCover" placeholder="https://..."></div>
+      <button type="submit" class="btn-primary">Сохранить</button>
+      <button type="button" class="btn-outline" style="margin-top:8px;" onclick="closeGameForm()">Отмена</button>
+    </form>
+  </div>
+</div>
 
-async function uploadImage() {
-  const file = document.getElementById('adminImageFile').files[0];
-  if (!file) {
-    alert('Выберите файл');
-    return;
-  }
-  
-  if (!sb) {
-    alert('Демо-режим: загрузка недоступна');
-    return;
-  }
-  
-  const status = document.getElementById('uploadStatus');
-  status.textContent = 'Загрузка...';
-  status.style.color = var(--blue);
-  
-  try {
-    const fileName = Date.now() + '-' + file.name;
-    const { error } = await sb.storage.from('images').upload(fileName, file);
-    
-    if (error) throw error;
-    
-    const { data } = await sb.storage.from('images').getPublicUrl(fileName);
-    
-    status.textContent = '✓ Загружено! URL: ' + data.publicUrl;
-    status.style.color = 'var(--green)';
-    
-    document.getElementById('adminImageFile').value = '';
-    loadAdminImages();
-    
-  } catch (e) {
-    status.textContent = 'Ошибка: ' + e.message;
-    status.style.color = 'var(--red)';
-  }
-}
+<!-- HOST FORM MODAL -->
+<div class="overlay" id="hostFormOverlay">
+  <div class="modal-box">
+    <button class="modal-x" onclick="closeHostForm()">×</button>
+    <div class="modal-title" id="hfTitle">Новый ведущий</div>
+    <form onsubmit="saveHost(event)" style="margin-top:20px;">
+      <input type="hidden" id="hfId">
+      <div class="form-group"><label>Имя</label><input id="hfName" placeholder="Дядя Коля" required></div>
+      <div class="form-group"><label>Роль</label><input id="hfRole" placeholder="мастер" required></div>
+      <div class="form-group"><label>URL фото</label><input id="hfPhoto" placeholder="https://..."></div>
+      <button type="submit" class="btn-primary">Сохранить</button>
+      <button type="button" class="btn-outline" style="margin-top:8px;" onclick="closeHostForm()">Отмена</button>
+    </form>
+  </div>
+</div>
 
-function copyImageUrl(url) {
-  navigator.clipboard.writeText(url).then(() => {
-    alert('URL скопирован в буфер обмена');
-  });
-}
 <script>
-// =====================================================================
-// КОНФИГУРАЦИЯ — ЗАМЕНИТЕ НА СВОИ РЕАЛЬНЫЕ ДАННЫЕ ИЗ SUPABASE
-// =====================================================================
-// Где взять:
-// 1. Зайдите в Supabase Dashboard → Settings → API
-// 2. Project URL — это SUPABASE_URL
-// 3. anon public key (начинается с eyJ...) — это SUPABASE_KEY
-// =====================================================================
-
+// ═══════════════════════════════════════════════════
+// КОНФИГУРАЦИЯ
+// ═══════════════════════════════════════════════════
 const SUPABASE_URL = 'https://fzkdgfsdjpaptmiwvjbe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6a2RnZnNkanBhcHRtaXd2amJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MjQ4OTAsImV4cCI6MjA5NDEwMDg5MH0.iL9c_CIyDGUQ_C0_-mKdlq8eG1FPUr-92HKaWCFcbrc';
+const ADMIN_PASS = 'mafia2026'; // Поменяйте на свой пароль!
 
-// Автоопределение демо-режима: если ключ не заменён — работаем на демо-данных
-const DEMO_MODE = !SUPABASE_KEY.startsWith('eyJ') || SUPABASE_KEY === 'SUPABASE_KEY';
+const DEMO_MODE = SUPABASE_URL.includes('your-project') || SUPABASE_KEY === 'your-anon-key-here';
+let sb = null;
 
-let sb = null; 
-
-// ====== DEBUG BANNER ======
-function setDebug(status, text) {
-  const banner = document.getElementById('debugBanner');
-  const dot = banner.querySelector('.dot');
-  const txt = document.getElementById('debugText');
-  banner.className = 'debug-banner ' + status;
-  dot.className = 'dot ' + (status === 'connected' ? 'green' : status === 'error' ? 'red' : 'yellow');
-  txt.textContent = text;
+// ─── STATUS BANNER ───
+function setStatus(cls, txt) {
+  const b = document.getElementById('statusBar');
+  const t = document.getElementById('statusTxt');
+  b.className = 'status-bar ' + cls;
+  t.textContent = txt;
 }
 
-  // ====== GAME DETAIL PAGE ======
-function showGameDetail(id) {
-  const g = allLoadedGames.find(x => String(x.id) === String(id));
-  if (!g) return;
-  
-  document.getElementById('main-view').style.display = 'none';
-  document.getElementById('profile-view').style.display = 'none';
-  document.getElementById('game-detail-view').style.display = 'block';
-  
-  // Обложка
-  const cover = document.getElementById('gdCover');
-  if (g.cover_image_url) {
-    cover.style.backgroundImage = `url('${g.cover_image_url}')`;
-  } else {
-    cover.style.background = 'linear-gradient(135deg, #1a1a3e 0%, #2c1f4a 100%)';
-  }
-  
-  // Инфо
-  document.getElementById('gdTitle').textContent = g.title || typeLabel(g.game_type);
-  document.getElementById('gdTime').textContent = formatRange(g.start_at, g.end_at);
-  document.getElementById('gdPrice').textContent = g.price + '₽';
-  document.getElementById('gdLocation').textContent = g.location || '';
-  
-  // Ведущие
-  let hostsHTML = `
-    <div class="game-detail-host">
-      <div class="photo">${girlAvatar(7)}</div>
-      <div><div class="name">${g.host_name || 'Ведущий'}</div><div class="role">${g.host_role || 'мастер'}</div></div>
-    </div>
-  `;
-  if (g.organizer_name) {
-    hostsHTML += `
-      <div class="game-detail-host">
-        <div class="photo">${girlAvatar(8)}</div>
-        <div><div class="name">${g.organizer_name}</div><div class="role">${g.organizer_role || 'организатор'}</div></div>
-      </div>
-    `;
-  }
-  document.getElementById('gdHosts').innerHTML = hostsHTML;
-  
-  // Участники
-  const confirmed = (g.registrations || []).filter(r => r.status === 'confirmed');
-  document.getElementById('gdPlayersCount').textContent = confirmed.length;
-  document.getElementById('gdPlayersMax').textContent = g.max_seats;
-  
-  // Демо-данные участников
-  const demoPlayers = [
-    { name: 'Швед Ренессанс', title: 'принц Англии', badge: 'veteran', games: 14, wins: 5 },
-    { name: 'Таисия Актриса', title: 'Королева Англии', badge: 'star', games: 3, wins: 0 },
-    { name: 'Нина', title: 'Нилетто', badge: 'newbie', games: 17, wins: 2 },
-    { name: 'Артем', title: 'Артемщик', badge: 'master', games: 8, wins: 4 },
-    { name: 'Никита Заяц', title: 'Ебака Грозный', badge: 'newbie', games: 5, wins: 1 },
-  ];
-  
-  const playersHTML = demoPlayers.slice(0, confirmed.length || 5).map((p, i) => `
-    <div class="player-row">
-      <div class="photo">
-        ${girlAvatar(i)}
-        <span class="player-badge ${p.badge}">${
-          p.badge === 'veteran' ? 'ветеран' : 
-          p.badge === 'star' ? 'звезда' : 
-          p.badge === 'master' ? 'мэтр' : 'новичок'
-        }</span>
-      </div>
-      <div class="info">
-        <div class="name">${p.name}</div>
-        <div class="title">${p.title}</div>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="stat-num">${p.games}</div><div class="stat-label">игр</div></div>
-        <div class="stat"><div class="stat-num">${p.wins}</div><div class="stat-label">побед</div></div>
-      </div>
-    </div>
-  `).join('');
-  
-  document.getElementById('gdPlayersList').innerHTML = playersHTML;
-  
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Обновите функции карточек - добавьте onclick
-// Замените в heroCardHTML, simpleCardHTML, largeCardHTML:
-// onclick="openModal('${g.id}')"
-// на:
-// onclick="showGameDetail('${g.id}')"
-
-// ====== INIT SUPABASE ======
-async function initSupabase() {
+// ─── INIT ───
+async function initSB() {
   if (DEMO_MODE) {
-    setDebug('', '⚠️ ДЕМО-РЕЖИМ — данные локальные. Замените SUPABASE_KEY на настоящий anon key (eyJ...)');
-    console.warn('DEMO MODE: Supabase key не настроен. Используются локальные демо-данные.');
-    console.warn('Чтобы подключить БД:');
-    console.warn('1. Supabase Dashboard → Settings → API');
-    console.warn('2. Скопируйте "anon public" ключ (начинается с eyJ...)');
-    console.warn('3. Вставьте его в SUPABASE_KEY в коде');
+    setStatus('connecting', '⚠️ Демо-режим. Вставьте реальный Supabase ключ для работы с БД.');
     return;
   }
-
   try {
-    setDebug('', 'Подключение к Supabase...');
-
-    if (typeof window.supabase === 'undefined') {
-      throw new Error('Supabase JS library не загрузилась. Проверьте интернет.');
-    }
-
+    setStatus('connecting', 'Подключение...');
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Тестовый запрос — проверяем что таблица games существует
-    const { data, error } = await sb.from('games').select('id').limit(1);
-
-    if (error) {
-      throw new Error(`Supabase ответил ошибкой: ${error.message} (code: ${error.code})`);
-    }
-
-    setDebug('connected', `✅ Supabase подключён! Найдено записей в games: проверка ОК`);
-    console.log('Supabase connected successfully. Test query returned:', data);
-
+    const { error } = await sb.from('games').select('id').limit(1);
+    if (error) throw error;
+    setStatus('ok', '✅ Supabase подключён');
   } catch (e) {
     sb = null;
-    setDebug('error', `❌ Ошибка подключения: ${e.message}`);
-    console.error('Supabase init error:', e);
-    console.error('Переключаемся на демо-данные');
+    setStatus('err', '❌ Ошибка: ' + e.message + ' — работаем на демо-данных');
   }
 }
 
-// ====== УТИЛИТЫ ======
-const WEEKDAYS = ['вс','пн','вт','ср','чт','пт','сб'];
-const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-function formatDateLabel(d) { return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${WEEKDAYS[d.getDay()]}`; }
-function isSameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-function formatTime(iso) { const d = new Date(iso); return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }
-function formatRange(s, e) { return `${formatTime(s)} — ${formatTime(e)}`; }
-function typeLabel(t) { return { city_mafia: 'Городская мафия', sport_mafia: 'Спортивная мафия', dice: 'Кубики', other: 'Игра' }[t] || t || 'Игра'; }
+// ═══════════════════════════════════════════════════
+// УТИЛИТЫ
+// ═══════════════════════════════════════════════════
+const WD = ['вс','пн','вт','ср','чт','пт','сб'];
+const MN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const fDate = d => `${d.getDate()} ${MN[d.getMonth()]}, ${WD[d.getDay()]}`;
+const fTime = iso => new Date(iso).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+const fRange = (s,e) => `${fTime(s)} — ${fTime(e)}`;
+const tLabel = t => ({city_mafia:'Городская мафия',sport_mafia:'Спортивная мафия',dice:'Кубики',other:'Игра'})[t]||t||'Игра';
+const confirmed = regs => (regs||[]).filter(r=>r.status==='confirmed').length;
 
-// ====== АВАТАРКИ ======
-function girlAvatar(seed = 0) {
-  const palette = ['#c08555','#b87a5c','#a86a4f','#d4a574','#c19273','#b58a6d'];
-  const c = palette[seed % palette.length];
-  return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="ga${seed}" x1="0" y1="0" x2="0" y2="1">
+function ava(seed=0, size=60) {
+  const c = ['#c08555','#b87a5c','#a86a4f','#d4a574','#c19273','#b58a6d'][seed%6];
+  return `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="g${seed}s${size}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${c}"/><stop offset="100%" stop-color="#4a2818"/>
     </linearGradient></defs>
-    <rect width="60" height="60" fill="url(#ga${seed})"/>
-    <circle cx="30" cy="22" r="11" fill="#f2cca8"/>
-    <path d="M10 60 Q 30 42 50 60 Z" fill="#7a3a1f"/>
-    <path d="M14 27 Q 14 11 30 11 Q 46 11 46 27 L 44 38 L 16 38 Z" fill="#6b2f1a"/>
+    <rect width="${size}" height="${size}" fill="url(#g${seed}s${size})"/>
+    <circle cx="${size/2}" cy="${size*.37}" r="${size*.18}" fill="#f2cca8"/>
+    <path d="M${size*.17} ${size} Q ${size/2} ${size*.7} ${size*.83} ${size} Z" fill="#7a3a1f"/>
+    <path d="M${size*.23} ${size*.45} Q ${size*.23} ${size*.18} ${size/2} ${size*.18} Q ${size*.77} ${size*.18} ${size*.77} ${size*.45} L ${size*.73} ${size*.63} L ${size*.27} ${size*.63} Z" fill="#6b2f1a"/>
   </svg>`;
 }
 
-// ====== КАЛЕНДАРЬ ======
+// ═══════════════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════════════
 const today = new Date(); today.setHours(0,0,0,0);
-let firstVisibleOffset = 0;
-let activeOffset = 0;
-const VISIBLE_COUNT = 5;
+let visStart = 0, activeOff = 0;
 
 function renderDates() {
-  const root = document.getElementById('datesScroll');
-  let html = '';
-  for (let i = 0; i < VISIBLE_COUNT; i++) {
-    const offset = firstVisibleOffset + i;
-    const d = new Date(today); d.setDate(today.getDate() + offset);
-    const cls = ['date-pill'];
-    if (offset === 0) cls.push('today');
-    if (offset === activeOffset) cls.push('active');
-    html += `<button class="${cls.join(' ')}" onclick="selectDate(${offset})">${formatDateLabel(d)}</button>`;
+  const root = document.getElementById('datesGrid');
+  let h = '';
+  for (let i = 0; i < 5; i++) {
+    const off = visStart + i;
+    const d = new Date(today); d.setDate(today.getDate() + off);
+    const cls = ['date-btn', off===0?'today':'', off===activeOff?'active':''].filter(Boolean).join(' ');
+    h += `<button class="${cls}" onclick="pickDate(${off})">${fDate(d)}</button>`;
   }
-  root.innerHTML = html;
+  root.innerHTML = h;
 }
-function shiftDates(dir) { firstVisibleOffset += dir * VISIBLE_COUNT; renderDates(); }
-function selectDate(offset) { activeOffset = offset; renderDates(); loadGames(); }
+function shiftDates(dir) { visStart += dir * 5; renderDates(); }
+function pickDate(off) { activeOff = off; renderDates(); loadGames(); }
 
-// ====== ФИЛЬТР ПО ТЕГАМ ======
-let activeTagFilter = 'all';
-function filterByTag(el, type) {
-  activeTagFilter = type;
-  document.querySelectorAll('.tag-pill').forEach(p => p.classList.remove('active'));
+// ═══════════════════════════════════════════════════
+// TAG FILTER
+// ═══════════════════════════════════════════════════
+let tagFilter = 'all';
+let allGames  = [];
+function filterTag(el, t) {
+  tagFilter = t;
+  document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  renderFilteredGames();
+  renderGames();
 }
 
-// ====== ДЕМО-ДАННЫЕ ======
-function buildDemoGames(date) {
-  const offset = Math.round((date - today) / 86400000);
-  const idx = ((offset % 7) + 7) % 7;
-  const d = (h, m, plusDay = 0) => {
-    const x = new Date(date);
-    x.setDate(x.getDate() + plusDay);
-    x.setHours(h, m, 0, 0);
-    return x.toISOString();
-  };
+// ═══════════════════════════════════════════════════
+// DEMO GAMES
+// ═══════════════════════════════════════════════════
+function demoGames(date) {
+  const off = Math.round((date - today) / 86400000);
+  const idx = ((off % 7) + 7) % 7;
+  const dt = (h,m,plusDay=0) => { const x=new Date(date); x.setDate(x.getDate()+plusDay); x.setHours(h,m,0,0); return x.toISOString(); };
   const lib = 'Библиотека (Большой Путинковский пер., 5, м. Пушкинская)';
-  const mk = (overrides) => ({
-    id: 'd' + idx + '-' + (overrides.id || Math.random().toString(36).slice(2, 6)),
-    title: 'Городская мафия', subtitle: null, game_type: 'city_mafia',
-    cover_image_url: null,
-    start_at: d(19, 0), end_at: d(22, 0),
-    location: lib, price: 1500, max_seats: 10,
-    host_name: 'Дядя Коля', host_role: 'мастер',
-    organizer_name: null, organizer_role: null,
-    registrations: [],
-    ...overrides
-  });
-
-  if (idx === 0) return [
-    mk({ id: 'tsar', title: 'Царский', subtitle: 'Великолепный праздник мафии от дяди Бори и дяди Коли', cover_image_url: 'card-tsarsky.png', start_at: d(19, 0), end_at: d(23, 45), price: 5500, max_seats: 15, registrations: Array(15).fill({status:'confirmed'}) }),
-    mk({ id: 'gm', start_at: d(19, 0), end_at: d(22, 0), price: 1500, max_seats: 12, registrations: Array(10).fill({status:'confirmed'}) }),
-    mk({ id: 'cub1', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), price: 300, max_seats: 6, registrations: Array(1).fill({status:'confirmed'}) }),
-    mk({ id: 'cub2', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), price: 300, max_seats: 6, registrations: Array(1).fill({status:'confirmed'}) }),
-    mk({ id: 'cub3', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), price: 300, max_seats: 6, registrations: [] }),
-    mk({ id: 'leg', title: 'Легендарити', subtitle: 'Великолепный праздник мафии', cover_image_url: 'card-legendary.png', start_at: d(22, 0), end_at: d(2, 30, 1), price: 5500, max_seats: 16, host_role: 'ведущий', organizer_name: 'Дядя Боря', organizer_role: 'организатор', topBrand: true, likes: 5, registrations: Array(14).fill({status:'confirmed'}) }),
+  const mk = o => ({id:'d'+idx+'-'+(o.id||Math.random().toString(36).slice(2,6)),game_type:'city_mafia',cover_image_url:null,start_at:dt(19,0),end_at:dt(22,0),location:lib,price:1500,max_seats:10,host_name:'Дядя Коля',host_role:'мастер',registrations:[],...o});
+  if(idx===0) return [
+    mk({id:'tsar',title:'Царский',subtitle:'Великолепный праздник мафии от дяди Бори и дяди Коли',cover_image_url:'card-tsarsky.png',start_at:dt(19,0),end_at:dt(23,45),price:5500,max_seats:15,registrations:Array(15).fill({status:'confirmed'})}),
+    mk({id:'gm',title:'Городская мафия',max_seats:12,registrations:Array(10).fill({status:'confirmed'})}),
+    mk({id:'c1',title:'Кубики',game_type:'dice',price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})}),
+    mk({id:'c2',title:'Кубики',game_type:'dice',price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})}),
+    mk({id:'c3',title:'Кубики',game_type:'dice',price:300,max_seats:6,registrations:[]}),
+    mk({id:'leg',title:'Легендарити',subtitle:'Великолепный праздник мафии',cover_image_url:'card-legendary.png',start_at:dt(22,0),end_at:dt(2,30,1),price:5500,max_seats:16,host_role:'ведущий',organizer_name:'Дядя Боря',organizer_role:'организатор',topBrand:true,likes:5,registrations:Array(14).fill({status:'confirmed'})}),
   ];
-  if (idx === 1) return [
-    mk({ id: 'sm', title: 'Спортивная мафия', game_type: 'sport_mafia', start_at: d(19, 0), end_at: d(23, 0), price: 1800, max_seats: 10, host_name: 'Артём', registrations: Array(5).fill({status:'confirmed'}) }),
-    mk({ id: 'gm', start_at: d(20, 0), end_at: d(23, 30), host_name: 'Дядя Боря', host_role: 'ведущий', max_seats: 12, registrations: Array(4).fill({status:'confirmed'}) }),
+  if(idx===1) return [
+    mk({id:'sm',title:'Спортивная мафия',game_type:'sport_mafia',start_at:dt(19,0),end_at:dt(23,0),price:1800,max_seats:10,host_name:'Артём',registrations:Array(5).fill({status:'confirmed'})}),
+    mk({id:'gm',title:'Городская мафия',start_at:dt(20,0),end_at:dt(23,30),host_name:'Дядя Боря',host_role:'ведущий',max_seats:12,registrations:Array(4).fill({status:'confirmed'})}),
   ];
-  if (idx === 2) return [
-    mk({ id: 'tour', title: 'Турнирная мафия', subtitle: 'Отборочный этап', game_type: 'sport_mafia', start_at: d(19, 0), end_at: d(23, 0), price: 2500, max_seats: 10, host_name: 'Артём', registrations: Array(7).fill({status:'confirmed'}) }),
+  if(idx===2) return [mk({id:'tour',title:'Турнирная мафия',subtitle:'Отборочный этап',game_type:'sport_mafia',start_at:dt(19,0),end_at:dt(23,0),price:2500,max_seats:10,host_name:'Артём',registrations:Array(7).fill({status:'confirmed'})})];
+  if(idx===3) return [
+    mk({id:'c1',title:'Кубики',game_type:'dice',start_at:dt(19,0),end_at:dt(22,30),price:300,max_seats:6,registrations:Array(2).fill({status:'confirmed'})}),
+    mk({id:'c2',title:'Кубики',game_type:'dice',start_at:dt(19,0),end_at:dt(22,30),price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})}),
   ];
-  if (idx === 3) return [
-    mk({ id: 'cub1', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), end_at: d(22, 30), price: 300, max_seats: 6, registrations: Array(2).fill({status:'confirmed'}) }),
-    mk({ id: 'cub2', title: 'Кубики', game_type: 'dice', start_at: d(19, 0), end_at: d(22, 30), price: 300, max_seats: 6, registrations: Array(1).fill({status:'confirmed'}) }),
+  if(idx===4) return [
+    mk({id:'tsar',title:'Царский',subtitle:'Великолепный праздник мафии',cover_image_url:'card-tsarsky.png',start_at:dt(19,0),end_at:dt(23,45),price:5500,max_seats:14,host_name:'Дядя Боря',host_role:'ведущий',registrations:Array(3).fill({status:'confirmed'})}),
+    mk({id:'gm',title:'Городская мафия',start_at:dt(20,0),end_at:dt(22,0),max_seats:10,registrations:[]}),
   ];
-  if (idx === 4) return [
-    mk({ id: 'tsar', title: 'Царский', subtitle: 'Великолепный празд��ик мафии', cover_image_url: 'card-tsarsky.png', start_at: d(19, 0), end_at: d(23, 45), price: 5500, max_seats: 14, host_name: 'Дядя Боря', host_role: 'ведущий', registrations: Array(3).fill({status:'confirmed'}) }),
-    mk({ id: 'gm', start_at: d(20, 0), end_at: d(22, 0), max_seats: 10, registrations: [] }),
-  ];
-  if (idx === 5) return [];
-  if (idx === 6) return [
-    mk({ id: 'rauf', title: 'Светский раут', subtitle: 'Особый вечер для постоянных гостей', start_at: d(20, 0), end_at: d(0, 30, 1), price: 3000, max_seats: 12, registrations: Array(8).fill({status:'confirmed'}) }),
-  ];
-  return [];
+  if(idx===5) return [];
+  return [mk({id:'rauf',title:'Светский раут',subtitle:'Особый вечер для постоянных гостей',start_at:dt(20,0),end_at:dt(0,30,1),price:3000,max_seats:12,registrations:Array(8).fill({status:'confirmed'})})];
 }
 
-// ====== ЗАГРУЗКА ИГР ИЗ SUPABASE ======
-async function fetchGamesFromDB(date) {
-  if (!sb) return null;  // null = нет подключения, используем демо
-
-  try {
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    console.log(`Fetching games for ${dayStart.toISOString()} — ${dayEnd.toISOString()}`);
-
-    const { data, error } = await sb
-      .from('games')
-      .select(`
-        *,
-        registrations (
-          id,
-          seat_number,
-          status,
-          player_name
-        )
-      `)
-      .gte('start_at', dayStart.toISOString())
-      .lte('start_at', dayEnd.toISOString())
-      .order('start_at');
-
-    if (error) {
-      console.error('Supabase query error:', error);
-      setDebug('error', `Ошибка запроса: ${error.message}`);
-      return null;
-    }
-
-    console.log(`Loaded ${(data || []).length} games from Supabase:`, data);
-    return data || [];
-
-  } catch (e) {
-    console.error('fetchGamesFromDB error:', e);
-    return null;
+// ═══════════════════════════════════════════════════
+// LOAD & RENDER GAMES
+// ═══════════════════════════════════════════════════
+async function loadGames() {
+  const root = document.getElementById('schedContent');
+  root.innerHTML = '<div class="spinner"></div>';
+  const d = new Date(today); d.setDate(today.getDate() + activeOff);
+  let list = null;
+  if (sb) {
+    try {
+      const s = new Date(d); s.setHours(0,0,0,0);
+      const e = new Date(d); e.setHours(23,59,59,999);
+      const { data, error } = await sb.from('games')
+        .select('*, registrations(id,seat_number,status,player_name)')
+        .gte('start_at', s.toISOString())
+        .lte('start_at', e.toISOString())
+        .eq('status','scheduled').order('start_at');
+      if (!error) list = data || [];
+    } catch(err) { console.error(err); }
   }
+  allGames = list !== null ? list : demoGames(d);
+  renderGames();
 }
 
-// ====== РЕНДЕР КАРТОЧЕК ======
-function playersGridHTML(going, total) {
-  let html = '';
-  for (let i = 0; i < total; i++) {
-    if (i < going) html += `<div class="pavatar">${girlAvatar(i)}</div>`;
-    else html += `<div class="pavatar empty"></div>`;
-  }
-  return html;
-}
-function dotsRowHTML(going, total) {
-  let html = '';
-  const max = Math.min(total, 6);
-  for (let i = 0; i < max; i++) {
-    if (i < going) html += `<div class="pavatar">${girlAvatar(i)}</div>`;
-    else html += `<div class="pavatar empty"></div>`;
-  }
-  return html;
-}
-function countConfirmed(regs) { return (regs || []).filter(r => r.status === 'confirmed').length; }
-
-function heroCardHTML(g, going) {
-  return `<article class="card-hero" onclick="showGameDetail('${g.id}')">
-    <div class="cover" style="background-image: url('${g.cover_image_url}'); background-color: #1a1410;">
-      <div class="cover-title"><h3>${g.title}</h3>${g.subtitle ? `<p>${g.subtitle}</p>` : ''}</div>
-    </div>
-    <div class="info">
-      <div class="card-top">
-        <div>
-          <div class="card-name">${typeLabel(g.game_type)}</div>
-          <div class="card-time">${formatRange(g.start_at, g.end_at)}</div>
-          <div class="card-loc">${g.location || ''}</div>
-        </div>
-        <div class="card-price">${g.price} ₽</div>
-      </div>
-      <div class="card-host">
-        <div class="host-mini">${girlAvatar(7)}</div>
-        <div class="host-meta"><div class="name">${g.host_name || ''}</div><div class="role">${g.host_role || 'ведущий'}</div></div>
-      </div>
-      <div class="card-going-label">Идут ${going}/${g.max_seats}</div>
-      <div class="players-grid">${playersGridHTML(going, g.max_seats)}</div>
-      <div class="card-bottom"><span class="maybe-label">Возможно буду</span><button class="plus-btn" onclick="event.stopPropagation(); openModal('${g.id}')">+</button></div>
-    </div>
-  </article>`;
-}
-
-function simpleCardHTML(g, going) {
-  return `<article class="card-simple" onclick="showGameDetail('${g.id}')">
-    <div class="card-top">
-      <div>
-        <div class="card-name">${typeLabel(g.game_type)}</div>
-        <div class="card-time">${formatRange(g.start_at, g.end_at)}</div>
-        <div class="card-loc">${g.location || ''}</div>
-      </div>
-      <div class="card-price">${g.price} ₽</div>
-    </div>
-    <div class="card-host">
-      <div class="host-mini">${girlAvatar(7)}</div>
-      <div class="host-meta"><div class="name">${g.host_name || ''}</div><div class="role">${g.host_role || 'ведущий'}</div></div>
-    </div>
-    <div class="card-going-label">Идут ${going}/${g.max_seats}</div>
-    <div class="dots-row">${dotsRowHTML(going, g.max_seats)}</div>
-    <div class="card-bottom"><span class="maybe-label">Возможно буду</span><button class="plus-btn" onclick="event.stopPropagation(); openModal('${g.id}')">+</button></div>
-  </article>`;
-}
-
-function largeCardHTML(g, going) {
-  const topBrand = g.topBrand ? `<div class="card-badge-top"><div class="badge-top-brand">TOP<br>BRAND</div></div>` : '';
-  const heart = g.likes ? `<div class="card-heart"><svg viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${g.likes}</div>` : '';
-  return `<article class="card-large" onclick="showGameDetail('${g.id}')">
-    <div class="cover" style="background-image: url('${g.cover_image_url}'); background-color: #1a1410;">
-      ${topBrand}${heart}
-      <div class="cover-title"><h3>${g.title}</h3>${g.subtitle ? `<p>${g.subtitle}</p>` : ''}</div>
-    </div>
-    <div class="info">d
-      <div class="card-top">
-        <div>
-          <div class="card-name">${typeLabel(g.game_type)}</div>
-          <div class="card-time">${formatRange(g.start_at, g.end_at)}</div>
-          <div class="card-loc">${g.location || ''}</div>
-        </div>
-        <div class="card-price">${g.price} ₽</div>
-      </div>
-      <div class="hosts-block">
-        <div class="card-host" style="margin-top:0;"><div class="host-mini">${girlAvatar(7)}</div><div class="host-meta"><div class="name">${g.host_name || ''}</div><div class="role">${g.host_role || 'ведущий'}</div></div></div>
-        ${g.organizer_name ? `<div class="card-host" style="margin-top:0;"><div class="host-mini">${girlAvatar(8)}</div><div class="host-meta"><div class="name">${g.organizer_name}</div><div class="role">${g.organizer_role || 'организатор'}</div></div></div>` : ''}
-      </div>
-      <div class="card-going-label">Идут ${going}/${g.max_seats}</div>
-      <div class="players-grid">${playersGridHTML(going, g.max_seats)}</div>
-      <div class="card-bottom"><span class="maybe-label">Возможно буду</span><button class="plus-btn" onclick="event.stopPropagation(); openModal('${g.id}')">+</button></div>
-    </div>
-  </article>`;
-}
-
-let allLoadedGames = [];
-
-function renderFilteredGames() {
-  const root = document.getElementById('schedule-content');
-  let list = allLoadedGames;
-
-  // Фильтр по тегу
-  if (activeTagFilter !== 'all') {
-    list = list.filter(g => g.game_type === activeTagFilter);
-  }
-
+function renderGames() {
+  const root = document.getElementById('schedContent');
+  let list = allGames;
+  if (tagFilter !== 'all') list = list.filter(g => g.game_type === tagFilter);
   if (!list.length) {
-    root.innerHTML = allLoadedGames.length
-      ? `<div class="empty-state">Нет игр выбранного типа на этот день</div>`
-      : `<div class="empty-state">На этот день игр пока нет</div>`;
+    root.innerHTML = `<div class="empty-state">${allGames.length?'Нет игр выбранного типа':'На этот день игр пока нет'}</div>`;
     return;
   }
-
-  // Группируем по времени начала
   const byTime = {};
-  for (const g of list) {
-    const t = formatTime(g.start_at);
-    if (!byTime[t]) byTime[t] = [];
-    byTime[t].push(g);
-  }
-
-  let html = '';
+  list.forEach(g => { const t = fTime(g.start_at); if(!byTime[t]) byTime[t]=[]; byTime[t].push(g); });
+  let h = '';
   for (const [time, games] of Object.entries(byTime)) {
-    html += `<div class="time-label">${time}</div>`;
+    h += `<div class="time-heading">${time}</div>`;
     const single = games.length === 1 && games[0].cover_image_url;
     if (single) {
-      const g = games[0];
-      html += largeCardHTML(g, countConfirmed(g.registrations));
+      h += lgCardHTML(games[0]);
     } else {
-      html += `<div class="games-row">`;
-      games.forEach((g, idx) => {
-        const going = countConfirmed(g.registrations);
-        if (g.cover_image_url && idx === 0) html += heroCardHTML(g, going);
-        else html += simpleCardHTML(g, going);
-      });
-      html += `</div>`;
+      h += '<div class="games-grid">';
+      games.forEach((g, i) => { h += g.cover_image_url && i===0 ? heroCardHTML(g) : simpleCardHTML(g); });
+      h += '</div>';
     }
   }
-  root.innerHTML = html;
+  root.innerHTML = h;
 }
 
-async function loadGames() {
-  const d = new Date(today);
-  d.setDate(today.getDate() + activeOffset);
-  const root = document.getElementById('schedule-content');
-  root.innerHTML = '<div class="loading-spinner"></div>';
-
-  try {
-    // Пробуем загрузить из Supabase
-    let list = await fetchGamesFromDB(d);
-
-    // Если нет подключения — используем демо
-    if (list === null) {
-      list = buildDemoGames(d);
-      if (!DEMO_MODE) {
-        console.warn('Fallback to demo data due to DB error');
-      }
-    }
-
-    allLoadedGames = list;
-    renderFilteredGames();
-
-  } catch (e) {
-    console.error('loadGames error:', e);
-    // Fallback на демо
-    allLoadedGames = buildDemoGames(d);
-    renderFilteredGames();
-  }
+// ─── CARD HTML ───
+function heroCardHTML(g) {
+  const go = confirmed(g.registrations);
+  return `<article class="card card-hero" onclick="showDetail('${g.id}')">
+    <div class="cover" style="background-image:url('${g.cover_image_url}');background-color:#1a1a2e;">
+      <div class="cover-text"><h3>${g.title}</h3>${g.subtitle?`<p>${g.subtitle}</p>`:''}</div>
+    </div>
+    <div class="body">
+      <div class="card-head"><div><div class="card-type">${tLabel(g.game_type)}</div><div class="card-time">${fRange(g.start_at,g.end_at)}</div><div class="card-loc">${g.location||''}</div></div><div class="card-price-inline">${g.price}₽</div></div>
+      <div class="host-row"><div class="host-ava">${ava(7,34)}</div><div><div class="host-name">${g.host_name||''}</div><div class="host-role">${g.host_role||'ведущий'}</div></div></div>
+      <div class="going-label">Идут ${go}/${g.max_seats}</div>
+      <div class="avatars">${avatarGrid(go,g.max_seats)}</div>
+      <div class="card-foot"><span class="maybe-txt">Возможно буду</span><button class="reg-btn" onclick="event.stopPropagation();openReg('${g.id}')">+</button></div>
+    </div></article>`;
+}
+function simpleCardHTML(g) {
+  const go = confirmed(g.registrations);
+  return `<article class="card card-simple" onclick="showDetail('${g.id}')">
+    <div class="card-head"><div><div class="card-type">${tLabel(g.game_type)}</div><div class="card-time">${fRange(g.start_at,g.end_at)}</div><div class="card-loc">${g.location||''}</div></div><div class="card-price-inline">${g.price}₽</div></div>
+    <div class="host-row"><div class="host-ava">${ava(7,34)}</div><div><div class="host-name">${g.host_name||''}</div><div class="host-role">${g.host_role||'ведущий'}</div></div></div>
+    <div class="going-label">Идут</div>
+    <div class="ava-row">${dotRow(go,g.max_seats)}</div>
+    <div class="card-foot"><span class="maybe-txt">Возможно буду</span><button class="reg-btn" onclick="event.stopPropagation();openReg('${g.id}')">+</button></div>
+  </article>`;
+}
+function lgCardHTML(g) {
+  const go = confirmed(g.registrations);
+  const top = g.topBrand?`<div class="topbrand-badge">TOP<br>BRAND</div>`:'';
+  const hrt = g.likes?`<div class="heart-badge"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${g.likes}</div>`:'';
+  return `<article class="card card-large" onclick="showDetail('${g.id}')">
+    <div class="cover" style="background-image:url('${g.cover_image_url}');background-color:#1a1a2e;">${top}${hrt}
+      <div class="cover-text"><h3>${g.title}</h3>${g.subtitle?`<p>${g.subtitle}</p>`:''}</div>
+    </div>
+    <div class="body">
+      <div class="card-head"><div><div class="card-type">${tLabel(g.game_type)}</div><div class="card-time">${fRange(g.start_at,g.end_at)}</div><div class="card-loc">${g.location||''}</div></div><div class="card-price-inline">${g.price}₽</div></div>
+      <div style="margin-top:14px;">
+        <div class="host-row"><div class="host-ava">${ava(7,34)}</div><div><div class="host-name">${g.host_name||''}</div><div class="host-role">${g.host_role||'ведущий'}</div></div></div>
+        ${g.organizer_name?`<div class="host-row"><div class="host-ava">${ava(8,34)}</div><div><div class="host-name">${g.organizer_name}</div><div class="host-role">${g.organizer_role||'организатор'}</div></div></div>`:''}
+      </div>
+      <div class="going-label">Идут</div>
+      <div class="avatars">${avatarGrid(go,g.max_seats)}</div>
+      <div class="card-foot"><span class="maybe-txt">Возможно буду</span><button class="reg-btn" onclick="event.stopPropagation();openReg('${g.id}')">+</button></div>
+    </div></article>`;
+}
+function avatarGrid(go, total) {
+  let h='';
+  for(let i=0;i<total;i++) h += i<go?`<div class="ava">${ava(i,24)}</div>`:`<div class="ava empty"></div>`;
+  return h;
+}
+function dotRow(go, total) {
+  let h=''; const max=Math.min(total,6);
+  for(let i=0;i<max;i++) h += i<go?`<div class="ava">${ava(i,26)}</div>`:`<div class="ava empty"></div>`;
+  return h;
 }
 
-// ====== МОДАЛКА ======
-let activeGame = null;
-let selectedSeat = null;
-
-async function openModal(id) {
-  const g = allLoadedGames.find(x => String(x.id) === String(id));
-  if (!g) { console.warn('Game not found:', id); return; }
-  activeGame = g;
-  selectedSeat = null;
-  document.getElementById('mTitle').textContent = g.title || typeLabel(g.game_type);
-  const dt = new Date(g.start_at);
-  document.getElementById('mMeta').textContent = `${formatDateLabel(dt)} · ${formatRange(g.start_at, g.end_at)}`;
-  document.getElementById('bookBtn').disabled = true;
-  document.getElementById('bookBtn').textContent = 'Записаться';
+// ═══════════════════════════════════════════════════
+// REGISTRATION MODAL
+// ═══════════════════════════════════════════════════
+let activeGame=null, selSeat=null;
+function openReg(id) {
+  const g = allGames.find(x=>String(x.id)===String(id)); if(!g) return;
+  activeGame=g; selSeat=null;
+  document.getElementById('rTitle').textContent = g.title||tLabel(g.game_type);
+  document.getElementById('rSub').textContent = `${fDate(new Date(g.start_at))} · ${fRange(g.start_at,g.end_at)}`;
+  const btn=document.getElementById('regBtn'); btn.disabled=true; btn.textContent='Записаться';
   renderSeats(g);
-  document.getElementById('modalBg').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  document.getElementById('regOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
 }
-
-function closeModal() {
-  document.getElementById('modalBg').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
+function closeReg() { document.getElementById('regOverlay').classList.remove('open'); document.body.style.overflow=''; }
 function renderSeats(g) {
-  const wrap = document.getElementById('tableWrap');
-  wrap.querySelectorAll('.seat').forEach(s => s.remove());
-  const total = g.max_seats;
-  const takenSet = new Set(
-    (g.registrations || [])
-      .filter(r => r.status === 'confirmed' && r.seat_number)
-      .map(r => r.seat_number)
-  );
-
-  // Если нет seat_number в данных — имитируем занятые места
-  if (takenSet.size === 0) {
-    const going = countConfirmed(g.registrations);
-    const sample = [2, 9, 10, 12, 1, 4, 5, 7, 8, 11, 13, 14, 6, 3, 15, 16];
-    for (let i = 0; i < going && i < sample.length; i++) takenSet.add(sample[i]);
-  }
-
-  const radius = 108, cx = 135, cy = 135;
-  for (let i = 1; i <= total; i++) {
-    const angle = (-Math.PI / 2) + ((i - 1) / total) * Math.PI * 2;
-    const x = cx + Math.cos(angle) * radius - 18;
-    const y = cy + Math.sin(angle) * radius - 18;
-    const taken = takenSet.has(i);
-    const seat = document.createElement('button');
-    seat.className = 'seat' + (taken ? ' taken' : '');
-    seat.style.left = x + 'px';
-    seat.style.top = y + 'px';
-    seat.textContent = i;
-    if (!taken) seat.onclick = () => selectSeat(i, seat);
-    wrap.appendChild(seat);
+  const wrap=document.getElementById('tableWrap');
+  wrap.querySelectorAll('.seat').forEach(s=>s.remove());
+  const taken=new Set((g.registrations||[]).filter(r=>r.status==='confirmed'&&r.seat_number).map(r=>r.seat_number));
+  if(!taken.size){const go=confirmed(g.registrations);const s=[2,9,10,12,1,4,5,7,8,11,13,14,6,3,15,16];for(let i=0;i<go&&i<s.length;i++)taken.add(s[i]);}
+  const R=107,cx=134,cy=134;
+  for(let i=1;i<=g.max_seats;i++){
+    const angle=-Math.PI/2+((i-1)/g.max_seats)*Math.PI*2;
+    const x=cx+Math.cos(angle)*R-18, y=cy+Math.sin(angle)*R-18;
+    const el=document.createElement('button');
+    el.className='seat'+(taken.has(i)?' taken':'');
+    el.style.cssText=`left:${x}px;top:${y}px;`;
+    el.textContent=i;
+    if(!taken.has(i)) el.onclick=()=>pickSeat(i,el);
+    wrap.appendChild(el);
   }
 }
-
-function selectSeat(num, el) {
-  selectedSeat = num;
-  document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  document.getElementById('bookBtn').disabled = false;
-  document.getElementById('bookBtn').textContent = `Записаться на место ${num}`;
+function pickSeat(n,el){
+  selSeat=n;
+  document.querySelectorAll('.seat').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  const btn=document.getElementById('regBtn'); btn.disabled=false; btn.textContent=`Записаться на место ${n}`;
 }
-
-async function confirmBooking() {
-  if (!selectedSeat || !activeGame) return;
-  const name = document.getElementById('mName').value.trim();
-  const phone = document.getElementById('mPhone').value.trim();
-  if (!name || !phone) { alert('Заполните имя и телефон'); return; }
-
-  const btn = document.getElementById('bookBtn');
-  btn.disabled = true;
-  btn.textContent = 'Записываем...';
-
-  // Если нет подключения к БД — демо-режим
-  if (!sb) {
-    setTimeout(() => {
-      btn.textContent = '✓ Записан (демо)';
-      setTimeout(closeModal, 800);
-    }, 500);
-    return;
-  }
-
-  try {
-    const { error } = await sb.from('registrations').insert({
-      game_id: activeGame.id,
-      player_name: name,
-      player_phone: phone,
-      seat_number: selectedSeat,
-      status: 'confirmed'
-    });
-
-    if (error) {
-      if (error.code === '23505') {
-        alert('Это место только что заняли. Выберите другое.');
-        btn.disabled = false;
-        btn.textContent = 'Записаться';
-      } else {
-        alert('Ошибка: ' + error.message);
-        btn.disabled = false;
-        btn.textContent = 'Записаться';
-      }
+async function doRegister(){
+  if(!selSeat||!activeGame) return;
+  const name=document.getElementById('rName').value.trim();
+  const phone=document.getElementById('rPhone').value.trim();
+  if(!name||!phone){alert('Заполните имя и телефон');return;}
+  const btn=document.getElementById('regBtn'); btn.disabled=true; btn.textContent='Записываем...';
+  if(!sb){setTimeout(()=>{btn.textContent='✓ Записан (демо)';setTimeout(closeReg,700);},400);return;}
+  try{
+    const {error}=await sb.from('registrations').insert({game_id:activeGame.id,player_name:name,player_phone:phone,seat_number:selSeat,status:'confirmed'});
+    if(error){
+      if(error.code==='23505'){alert('Это место только что заняли — выберите другое.');btn.disabled=false;btn.textContent=`Записаться на место ${selSeat}`;}
+      else{alert('Ошибка: '+error.message);btn.disabled=false;btn.textContent='Записаться';}
       return;
     }
-
-    btn.textContent = '✓ Записан!';
-    setTimeout(() => {
-      closeModal();
-      loadGames();  // Перезагружаем данные
-    }, 800);
-
-  } catch (e) {
-    alert('Ошибка соединения: ' + e.message);
-    btn.disabled = false;
-    btn.textContent = 'Записаться';
-  }
+    btn.textContent='✓ Записан!';
+    setTimeout(()=>{closeReg();loadGames();},700);
+  }catch(e){alert('Ошибка: '+e.message);btn.disabled=false;btn.textContent='Записаться';}
 }
 
-document.getElementById('modalBg').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalBg')) closeModal();
-});
-
-// ====== DRAWER ======
-function openDrawer() {
-  document.getElementById('drawer').classList.add('open');
-  document.getElementById('drawerBg').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeDrawer() {
-  document.getElementById('drawer').classList.remove('open');
-  document.getElementById('drawerBg').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-// ====== PROFILE ======
-const DEFAULT_PROFILE = {
-  name: 'Всеволод', title: 'Мистер Икс', star: 'звезда', badge: 'Цари',
-  avatar_url: 'avatar-vsevolod.png',
-  stats: { cm: { games: 15, wins: 10 }, sm: { games: 55, wins: 32 }, d: { games: 2, wins: 0 } }
-};
-
-function loadProfile() {
-  try {
-    const saved = localStorage.getItem('mafia_profile');
-    if (saved) return { ...DEFAULT_PROFILE, ...JSON.parse(saved) };
-  } catch(e) {}
-  return { ...DEFAULT_PROFILE };
-}
-function saveProfile(p) {
-  try { localStorage.setItem('mafia_profile', JSON.stringify(p)); } catch(e) {}
-}
-function renderProfile() {
-  const p = loadProfile();
-  document.getElementById('pf-name').textContent = p.name;
-  document.getElementById('pf-title').textContent = p.title;
-  document.getElementById('pf-star').textContent = p.star;
-  document.getElementById('pf-badge').textContent = p.badge;
-  document.getElementById('pf-avatar').style.backgroundImage = `url('${p.avatar_url}')`;
-  document.getElementById('pf-cm-games').textContent = p.stats.cm.games;
-  document.getElementById('pf-cm-wins').textContent = p.stats.cm.wins;
-  document.getElementById('pf-sm-games').textContent = p.stats.sm.games;
-  document.getElementById('pf-sm-wins').textContent = p.stats.sm.wins;
-  document.getElementById('pf-d-games').textContent = p.stats.d.games;
-  document.getElementById('pf-d-wins').textContent = p.stats.d.wins;
-  document.getElementById('navAvatar').innerHTML = `<img src="${p.avatar_url}" alt="" onerror="this.parentElement.innerHTML='${girlAvatar(0).replace(/'/g, "\\'")}'">`;
-  document.getElementById('drawerAvatar').innerHTML = `<img src="${p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${girlAvatar(0).replace(/'/g, "\\'")}'">`;
-}
-function editProfileField(field) {
-  const p = loadProfile();
-  const labels = { name: 'Имя', title: 'Звание', star: 'Статус' };
-  const newVal = prompt(labels[field] + ':', p[field]);
-  if (newVal !== null && newVal.trim()) {
-    p[field] = newVal.trim();
-    saveProfile(p);
-    renderProfile();
-  }
-}
-function onAvatarUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { alert('Файл больше 2 МБ'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const p = loadProfile();
-    p.avatar_url = e.target.result;
-    saveProfile(p);
-    renderProfile();
-  };
-  reader.readAsDataURL(file);
+// ═══════════════════════════════════════════════════
+// GAME DETAIL
+// ═══════════════════════════════════════════════════
+function showDetail(id){
+  const g=allGames.find(x=>String(x.id)===String(id)); if(!g) return;
+  hideAll(); document.getElementById('gdView').style.display='block';
+  if(g.cover_image_url){document.getElementById('gdCover').style.backgroundImage=`url('${g.cover_image_url}')`;document.getElementById('gdCover').style.background='';}
+  else{document.getElementById('gdCover').style.background='linear-gradient(135deg,#1a1a2e,#2d2b55)';document.getElementById('gdCover').style.backgroundImage='';}
+  document.getElementById('gdTitle').textContent=g.title||tLabel(g.game_type);
+  document.getElementById('gdTime').textContent=fRange(g.start_at,g.end_at);
+  document.getElementById('gdPrice').textContent=g.price+'₽';
+  document.getElementById('gdLoc').textContent=g.location||'';
+  const go=confirmed(g.registrations);
+  document.getElementById('gdCnt').textContent=go;
+  document.getElementById('gdMax').textContent=g.max_seats;
+  let hh=`<div class="gd-host"><div class="gd-hava">${ava(7,52)}</div><div><div class="gd-hname">${g.host_name||'Ведущий'}</div><div class="gd-hrole">${g.host_role||'мастер'}</div></div></div>`;
+  if(g.organizer_name) hh+=`<div class="gd-host"><div class="gd-hava">${ava(8,52)}</div><div><div class="gd-hname">${g.organizer_name}</div><div class="gd-hrole">${g.organizer_role||'организатор'}</div></div></div>`;
+  document.getElementById('gdHosts').innerHTML=hh;
+  const demo=[{name:'Швед Ренессанс',title:'принц Англии',b:'pl-b-v',bl:'ветеран',games:14,wins:5},{name:'Таисия Актриса',title:'Королева Англии',b:'pl-b-s',bl:'звезда',games:3,wins:0},{name:'Нина',title:'Нилетто',b:'pl-b-n',bl:'новичок',games:17,wins:2},{name:'Артем',title:'Артемщик',b:'pl-b-m',bl:'мэтр',games:8,wins:4},{name:'Никита Заяц',title:'Ебака Грозный',b:'pl-b-n',bl:'новичок',games:5,wins:1}];
+  document.getElementById('gdList').innerHTML=demo.slice(0,Math.max(go,3)).map((p,i)=>`<div class="player-row"><div class="pava">${ava(i,46)}<span class="pl-badge ${p.b}">${p.bl}</span></div><div class="pl-info"><div class="pl-name">${p.name}</div><div class="pl-title">${p.title}</div></div><div class="pl-stats"><div class="pl-stat"><div class="n">${p.games}</div><div class="l">игр</div></div><div class="pl-stat"><div class="n">${p.wins}</div><div class="l">побед</div></div></div></div>`).join('');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function showProfile() {
-  closeDrawer();
-  document.getElementById('main-view').style.display = 'none';
-  document.getElementById('profile-view').style.display = 'block';
+// ═══════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════
+function hideAll(){
+  ['mainView','profileView','gdView','adminView'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+}
+function showMain(){
+  hideAll();
+  document.getElementById('mainView').style.display='';
+}
+function showProfile(){
+  closeDrawer(); hideAll();
+  document.getElementById('profileView').style.display='block';
   renderProfile();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-function showMainView() {
-  document.getElementById('main-view').style.display = '';
-  document.getElementById('profile-view').style.display = 'none';
+function goToAbout(){
+  showMain();
+  requestAnimationFrame(()=>document.getElementById('aboutAnchor').scrollIntoView({behavior:'smooth'}));
 }
-function goHome() { showMainView(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-function goToSchedule() { showMainView(); requestAnimationFrame(() => { document.querySelector('.dates-wrapper').scrollIntoView({ behavior: 'smooth' }); }); }
-function goToAbout() { showMainView(); requestAnimationFrame(() => { document.querySelector('.about-section').scrollIntoView({ behavior: 'smooth' }); }); }
-function goToContacts() { showMainView(); requestAnimationFrame(() => { document.querySelector('footer').scrollIntoView({ behavior: 'smooth' }); }); }
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeDrawer(); closeModal(); }
-});
-
-// ====== О НАС ======
-function renderAbout() {
-  document.getElementById('founderPhoto').innerHTML = girlAvatar(0);
-  document.getElementById('t1').innerHTML = girlAvatar(1);
-  document.getElementById('t2').innerHTML = girlAvatar(2);
-  document.getElementById('t3').innerHTML = girlAvatar(3);
-  const hosts = [
-    { name: 'Швед', role: 'Принц Англии' },
-    { name: 'Дядя Коля', role: 'Кардинал' },
-    { name: 'Дядя Боря', role: 'Люцифер' },
-    { name: 'Артём', role: 'Артемщик' },
-    { name: 'Никита', role: 'Заяц' },
-    { name: 'Лев', role: 'Лорд' },
-  ];
-  document.getElementById('hostsList').innerHTML = hosts.map((h, i) =>
-    `<div class="host-card"><div class="photo">${girlAvatar(i)}</div><div class="name">${h.name}</div><div class="role">${h.role}</div></div>`
-  ).join('');
-  const reviews = [
-    { name: 'Алексей', role: 'Игрок', text: 'Невероятная атмосфера, ведущие на высшем уровне.' },
-    { name: 'Мария', role: 'Игрок', text: 'Пришла впервые — осталась навсегда.' },
-  ];
-  document.getElementById('reviewsList').innerHTML = reviews.map((r, i) =>
-    `<div class="review-card"><div class="photo">${girlAvatar(i+4)}</div><div><div class="name">${r.name}</div><div class="role">${r.role}</div><div class="text">${r.text}</div></div></div>`
-  ).join('');
+function goToSchedule(){
+  showMain();
+  requestAnimationFrame(()=>document.getElementById('schedAnchor').scrollIntoView({behavior:'smooth'}));
+}
+function goToContacts(){
+  showMain();
+  requestAnimationFrame(()=>document.getElementById('contactsAnchor').scrollIntoView({behavior:'smooth'}));
 }
 
-// ====== INIT ======
-(async function init() {
+// ═══════════════════════════════════════════════════
+// DRAWER
+// ═══════════════════════════════════════════════════
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('dBg').classList.add('open');document.body.style.overflow='hidden';}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('dBg').classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();closeReg();}});
+
+// ═══════════════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════════════
+const DEF_PF={name:'Всеволод',title:'Мистер Икс',star:'звезда',badge:'Цари',avatar:'avatar-vsevolod.png',stats:{cm:{g:15,w:10},sm:{g:55,w:32},d:{g:2,w:0}}};
+function getPF(){try{const s=localStorage.getItem('mfc_pf');if(s)return{...DEF_PF,...JSON.parse(s)};}catch(e){}return{...DEF_PF};}
+function savePF(p){try{localStorage.setItem('mfc_pf',JSON.stringify(p));}catch(e){}}
+function renderProfile(){
+  const p=getPF();
+  document.getElementById('pfName').textContent=p.name;
+  document.getElementById('pfTitle').textContent=p.title;
+  document.getElementById('pfStar').textContent=p.star;
+  document.getElementById('pfBadge').textContent=p.badge;
+  document.getElementById('pfAva').style.backgroundImage=`url('${p.avatar}')`;
+  document.getElementById('pCMg').textContent=p.stats.cm.g;
+  document.getElementById('pCMw').textContent=p.stats.cm.w;
+  document.getElementById('pSMg').textContent=p.stats.sm.g;
+  document.getElementById('pSMw').textContent=p.stats.sm.w;
+  document.getElementById('pDg').textContent=p.stats.d.g;
+  document.getElementById('pDw').textContent=p.stats.d.w;
+  const img=`<img src="${p.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${ava(0,42).replace(/'/g,"\\'")}'">`;
+  document.getElementById('navAva').innerHTML=img;
+  document.getElementById('dAva').innerHTML=img;
+}
+function editPF(f){
+  const p=getPF();
+  const lbl={name:'Имя',title:'Звание',star:'Статус'};
+  const v=prompt(lbl[f]+':',p[f]);
+  if(v!==null&&v.trim()){p[f]=v.trim();savePF(p);renderProfile();}
+}
+function uploadAvatar(ev){
+  const file=ev.target.files[0]; if(!file) return;
+  if(file.size>2*1024*1024){alert('Файл больше 2 МБ');return;}
+  const r=new FileReader();
+  r.onload=e=>{const p=getPF();p.avatar=e.target.result;savePF(p);renderProfile();};
+  r.readAsDataURL(file);
+}
+
+// ═══════════════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════════════
+function openAdmin(){
+  const p=prompt('Пароль администратора:');
+  if(p!==ADMIN_PASS){alert('Неверный пароль');return;}
+  hideAll();
+  document.getElementById('adminView').style.display='block';
+  loadAdminGames(); loadAdminHosts(); loadAdminImages();
+  window.scrollTo({top:0});
+}
+function closeAdmin(){showMain();}
+function switchTab(btn, tabId){
+  document.querySelectorAll('.a-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#adminView .admin-pane').forEach(p=>p.style.display='none');
+  document.getElementById(tabId).style.display='block';
+}
+
+// ADMIN: GAMES
+async function loadAdminGames(){
+  const el=document.getElementById('adminGames');
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    let games=[];
+    if(sb){
+      const {data,error}=await sb.from('games').select('*').order('start_at');
+      if(error)throw error; games=data||[];
+    } else { games=demoGames(today); }
+    if(!games.length){el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px;">Нет игр</p>';return;}
+    el.innerHTML=games.map(g=>`<div class="admin-row">
+      <div><div style="font-size:15px;font-weight:600;margin-bottom:3px;">${g.title||tLabel(g.game_type)}</div>
+      <div style="font-size:12.5px;color:#475569;">${fDate(new Date(g.start_at))} · ${fTime(g.start_at)} · ${g.price}₽</div></div>
+      <div class="row-acts">
+        <button class="btn-edit" onclick="openGameForm('${g.id}')">Редактировать</button>
+        <button class="btn-del"  onclick="delGame('${g.id}')">Удалить</button>
+      </div></div>`).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--red);padding:12px;">Ошибка: '+e.message+'</p>';}
+}
+let gfGames=[];
+async function openGameForm(id=null){
+  document.getElementById('gfTitle').textContent=id?'Редактировать игру':'Новая игра';
+  document.getElementById('gfId').value=id||'';
+  document.getElementById('gameFormOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  // Загрузить ведущих
+  let hosts=[];
+  if(sb){const{data}=await sb.from('hosts').select('*').order('name');hosts=data||[];}
+  else hosts=[{id:'1',name:'Дядя Коля'},{id:'2',name:'Дядя Боря'},{id:'3',name:'Артём'}];
+  document.getElementById('gfHost').innerHTML='<option value="">— Выберите ведущего —</option>'+hosts.map(h=>`<option value="${h.id}">${h.name}</option>`).join('');
+  if(id&&sb){
+    const{data}=await sb.from('games').select('*').eq('id',id).single();
+    if(data){
+      document.getElementById('gfName').value=data.title||'';
+      document.getElementById('gfSub').value=data.subtitle||'';
+      document.getElementById('gfType').value=data.game_type||'city_mafia';
+      document.getElementById('gfStart').value=new Date(data.start_at).toISOString().slice(0,16);
+      document.getElementById('gfEnd').value=new Date(data.end_at).toISOString().slice(0,16);
+      document.getElementById('gfLoc').value=data.location||'';
+      document.getElementById('gfPrice').value=data.price||1500;
+      document.getElementById('gfSeats').value=data.max_seats||10;
+      document.getElementById('gfCover').value=data.cover_image_url||'';
+      if(data.host_id)document.getElementById('gfHost').value=data.host_id;
+    }
+  }
+}
+function closeGameForm(){document.getElementById('gameFormOverlay').classList.remove('open');document.body.style.overflow='';}
+async function saveGame(ev){
+  ev.preventDefault();
+  if(!sb){alert('Демо-режим: сохранение недоступно');closeGameForm();return;}
+  const id=document.getElementById('gfId').value;
+  const hostId=document.getElementById('gfHost').value;
+  const hostEl=document.getElementById('gfHost');
+  const hostName=hostEl.options[hostEl.selectedIndex]?.text||'';
+  const data={
+    title:document.getElementById('gfName').value,
+    subtitle:document.getElementById('gfSub').value||null,
+    game_type:document.getElementById('gfType').value,
+    start_at:new Date(document.getElementById('gfStart').value).toISOString(),
+    end_at:new Date(document.getElementById('gfEnd').value).toISOString(),
+    location:document.getElementById('gfLoc').value,
+    price:parseInt(document.getElementById('gfPrice').value)||1500,
+    max_seats:parseInt(document.getElementById('gfSeats').value)||10,
+    host_id:hostId||null,
+    host_name:hostName||null,
+    cover_image_url:document.getElementById('gfCover').value||null,
+  };
+  try{
+    const res=id?await sb.from('games').update(data).eq('id',id):await sb.from('games').insert(data);
+    if(res.error)throw res.error;
+    alert('Игра сохранена!'); closeGameForm(); loadAdminGames(); loadGames();
+  }catch(e){alert('Ошибка: '+e.message);}
+}
+async function delGame(id){
+  if(!confirm('Удалить игру?'))return;
+  if(!sb){alert('Демо-режим');return;}
+  const{error}=await sb.from('games').delete().eq('id',id);
+  if(error){alert('Ошибка: '+error.message);return;}
+  alert('Удалено'); loadAdminGames(); loadGames();
+}
+
+// ADMIN: HOSTS
+async function loadAdminHosts(){
+  const el=document.getElementById('adminHosts');
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    let hosts=[];
+    if(sb){const{data,error}=await sb.from('hosts').select('*').order('name');if(error)throw error;hosts=data||[];}
+    else hosts=[{id:'1',name:'Дядя Коля',role:'мастер'},{id:'2',name:'Дядя Боря',role:'ведущий'}];
+    if(!hosts.length){el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px;">Нет ведущих</p>';return;}
+    el.innerHTML=hosts.map(h=>`<div class="admin-row">
+      <div><div style="font-size:15px;font-weight:600;">${h.name}</div><div style="font-size:12.5px;color:#475569;">${h.role||''}</div></div>
+      <div class="row-acts">
+        <button class="btn-edit" onclick="openHostForm('${h.id}')">Редактировать</button>
+        <button class="btn-del" onclick="delHost('${h.id}')">Удалить</button>
+      </div></div>`).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--red);padding:12px;">Ошибка: '+e.message+'</p>';}
+}
+async function openHostForm(id=null){
+  document.getElementById('hfTitle').textContent=id?'Редактировать ведущего':'Новый ведущий';
+  document.getElementById('hfId').value=id||'';
+  document.getElementById('hfName').value='';
+  document.getElementById('hfRole').value='';
+  document.getElementById('hfPhoto').value='';
+  if(id&&sb){
+    const{data}=await sb.from('hosts').select('*').eq('id',id).single();
+    if(data){document.getElementById('hfName').value=data.name||'';document.getElementById('hfRole').value=data.role||'';document.getElementById('hfPhoto').value=data.photo_url||'';}
+  }
+  document.getElementById('hostFormOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeHostForm(){document.getElementById('hostFormOverlay').classList.remove('open');document.body.style.overflow='';}
+async function saveHost(ev){
+  ev.preventDefault();
+  if(!sb){alert('Демо-режим');closeHostForm();return;}
+  const id=document.getElementById('hfId').value;
+  const data={name:document.getElementById('hfName').value,role:document.getElementById('hfRole').value,photo_url:document.getElementById('hfPhoto').value||null};
+  try{
+    const res=id?await sb.from('hosts').update(data).eq('id',id):await sb.from('hosts').insert(data);
+    if(res.error)throw res.error;
+    alert('Ведущий сохранён!'); closeHostForm(); loadAdminHosts();
+  }catch(e){alert('Ошибка: '+e.message);}
+}
+async function delHost(id){
+  if(!confirm('Удалить ведущего?'))return;
+  if(!sb){alert('Демо-режим');return;}
+  const{error}=await sb.from('hosts').delete().eq('id',id);
+  if(error){alert('Ошибка: '+error.message);return;}
+  alert('Удалено'); loadAdminHosts();
+}
+
+// ADMIN: IMAGES
+async function loadAdminImages(){
+  const el=document.getElementById('adminImages');
+  if(!sb){el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px;">Демо-режим: Storage недоступен</p>';return;}
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const{data,error}=await sb.storage.from('images').list();
+    if(error)throw error;
+    if(!data?.length){el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px;">Нет загруженных картинок</p>';return;}
+    const imgs=await Promise.all(data.map(async f=>{const{data:u}=await sb.storage.from('images').getPublicUrl(f.name);return{name:f.name,url:u.publicUrl};}));
+    el.innerHTML=imgs.map(img=>`<div class="img-card"><img src="${img.url}" alt="${img.name}"><button class="img-copy" onclick="copyUrl('${img.url}')">Копировать</button><div class="img-url">${img.url}</div></div>`).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--red);padding:12px;">Ошибка: '+e.message+'</p>';}
+}
+async function uploadImg(){
+  const file=document.getElementById('imgFile').files[0];
+  if(!file){alert('Выберите файл');return;}
+  if(!sb){alert('Демо-режим: загрузка недоступна');return;}
+  const st=document.getElementById('imgStatus');
+  st.style.color='var(--blue)'; st.textContent='Загрузка...';
+  try{
+    const fn=Date.now()+'-'+file.name;
+    const{error}=await sb.storage.from('images').upload(fn,file);
+    if(error)throw error;
+    const{data}=await sb.storage.from('images').getPublicUrl(fn);
+    st.style.color='var(--green)'; st.textContent='✓ Загружено: '+data.publicUrl;
+    document.getElementById('imgFile').value='';
+    loadAdminImages();
+  }catch(e){st.style.color='var(--red)'; st.textContent='Ошибка: '+e.message;}
+}
+function copyUrl(u){navigator.clipboard.writeText(u).then(()=>alert('URL скопирован!'));}
+
+// ═══════════════════════════════════════════════════
+// ABOUT SECTION
+// ═══════════════════════════════════════════════════
+function renderAbout(){
+  document.getElementById('fAva').innerHTML=ava(0,60);
+  document.getElementById('tAva1').innerHTML=ava(1,56);
+  document.getElementById('tAva2').innerHTML=ava(2,56);
+  document.getElementById('tAva3').innerHTML=ava(3,56);
+  const hosts=[{n:'Швед',r:'Принц Англии'},{n:'Дядя Коля',r:'Кардинал'},{n:'Дядя Боря',r:'Люцифер'},{n:'Артём',r:'Артемщик'},{n:'Никита',r:'Заяц'},{n:'Лев',r:'Лорд'}];
+  document.getElementById('hostsList').innerHTML=hosts.map((h,i)=>`<div class="host-chip"><div class="ph">${ava(i,80)}</div><div class="hn">${h.n}</div><div class="hr">${h.r}</div></div>`).join('');
+  const revs=[{n:'Алексей',r:'Игрок',t:'Невероятная атмосфера, ведущие на высшем уровне. Возвращаюсь каждый вечер.'},{n:'Мария',r:'Игрок',t:'Пришла впервые — осталась навсегда. Дружелюбная компания, отличная организация.'}];
+  document.getElementById('reviewsList').innerHTML=revs.map((rv,i)=>`<div class="review-card"><div class="rev-ava">${ava(i+4,46)}</div><div><div class="rev-name">${rv.n}</div><div class="rev-role">${rv.r}</div><div class="rev-text">${rv.t}</div></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+(async()=>{
   renderAbout();
   renderProfile();
   renderDates();
-  await initSupabase();
+  await initSB();
   await loadGames();
 })();
 </script>
-  <!-- ============ ADMIN PANEL ============ -->
-<section id="admin-view" class="admin-view">
-  <div class="admin-header">
-    <h1>Админ-панель</h1>
-    <button onclick="closeAdmin()">Выйти</button>
-  </div>
-  
-  <div class="admin-tabs">
-    <button class="admin-tab active" onclick="switchAdminTab('games')">Игры</button>
-    <button class="admin-tab" onclick="switchAdminTab('hosts')">Ведущие</button>
-    <button class="admin-tab" onclick="switchAdminTab('images')">Картинки</button>
-  </div>
-
-  <!-- TAB: Игры -->
-  <div id="admin-games" class="admin-tab-content">
-    <button class="btn-primary" onclick="showGameForm()">+ Добавить игру</button>
-    <div id="adminGamesList" class="admin-list"></div>
-  </div>
-
-  <!-- TAB: Ведущие -->
-  <div id="admin-hosts" class="admin-tab-content" style="display:none;">
-    <button class="btn-primary" onclick="showHostForm()">+ Добавить ведущего</button>
-    <div id="adminHostsList" class="admin-list"></div>
-  </div>
-
-  <!-- TAB: Картинки -->
-  <div id="admin-images" class="admin-tab-content" style="display:none;">
-    <div class="admin-upload">
-      <h3>Загрузить картинку</h3>
-      <input type="file" id="adminImageFile" accept="image/*">
-      <button class="btn-primary" onclick="uploadImage()">Загрузить</button>
-      <div id="uploadStatus"></div>
-    </div>
-    <div id="adminImagesList" class="admin-images-grid"></div>
-  </div>
-</section>
-
-<!-- MODAL: Форма игры -->
-<div class="modal-bg" id="adminGameModal">
-  <div class="modal admin-modal">
-    <button class="modal-close" onclick="closeGameForm()">×</button>
-    <h2 id="gameFormTitle">Новая игра</h2>
-    <form id="gameForm" onsubmit="saveGame(event)">
-      <input type="hidden" id="gameId">
-      
-      <label>Название игры</label>
-      <input type="text" id="gameTitle" placeholder="Царский" required>
-      
-      <label>Подзаголовок</label>
-      <input type="text" id="gameSubtitle" placeholder="Великолепный праздник мафии">
-      
-      <label>Тип игры</label>
-      <select id="gameType" required>
-        <option value="city_mafia">Городская мафия</option>
-        <option value="sport_mafia">Спортивная мафия</option>
-        <option value="dice">Кубики</option>
-        <option value="other">Другое</option>
-      </select>
-      
-      <label>Дата и время начала</label>
-      <input type="datetime-local" id="gameStart" required>
-      
-      <label>Дата и время окончания</label>
-      <input type="datetime-local" id="gameEnd" required>
-      
-      <label>Адрес</label>
-      <input type="text" id="gameLocation" value="Библиотека (Большой Путинковский пер., 5, м. Пушкинская)">
-      
-      <label>Цена (₽)</label>
-      <input type="number" id="gamePrice" value="1500" required>
-      
-      <label>Макс. мест</label>
-      <input type="number" id="gameMaxSeats" value="10" required>
-      
-      <label>Ведущий</label>
-      <select id="gameHost"></select>
-      
-      <label>URL картинки (необязательно)</label>
-      <input type="text" id="gameCover" placeholder="https://...">
-      
-      <button type="submit" class="btn-primary">Сохранить</button>
-      <button type="button" class="btn-secondary" onclick="closeGameForm()">Отмена</button>
-    </form>
-  </div>
-</div>
-
-<!-- MODAL: Форма ведущего -->
-<div class="modal-bg" id="adminHostModal">
-  <div class="modal admin-modal">
-    <button class="modal-close" onclick="closeHostForm()">×</button>
-    <h2 id="hostFormTitle">Новый ведущий</h2>
-    <form id="hostForm" onsubmit="saveHost(event)">
-      <input type="hidden" id="hostId">
-      
-      <label>Имя</label>
-      <input type="text" id="hostName" placeholder="Дядя Коля" required>
-      
-      <label>Роль</label>
-      <input type="text" id="hostRole" placeholder="мастер" required>
-      
-      <label>URL фото (необязательно)</label>
-      <input type="text" id="hostPhoto" placeholder="https://...">
-      
-      <button type="submit" class="btn-primary">Сохранить</button>
-      <button type="button" class="btn-secondary" onclick="closeHostForm()">Отмена</button>
-    </form>
-  </div>
-</div>
 </body>
 </html>
