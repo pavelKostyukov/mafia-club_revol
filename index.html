@@ -732,106 +732,259 @@ function renderAbout(){
   document.getElementById('reviewsList').innerHTML=[{name:'Алексей',role:'Игрок',text:'Невероятная атмосфера, ведущие на высшем уровне. Возвращаюсь каждый вечер.'},{name:'Мария',role:'Игрок',text:'Пришла впервые — осталась навсегда. Дружелюбная компания, отличная организация.'}].map((r,i)=>`<div class="rcard"><div class="rphoto">${av(i+4)}</div><div><div class="rname">${r.name}</div><div class="rrole">${r.role}</div><div class="rtext">${r.text}</div></div></div>`).join('');
 }
 
+// ====== ADMIN PANEL ======
 function openAdmin(){
-  const p=prompt('Пароль:');if(p!==ADMIN_PASS){alert('Неверный пароль');return;}
-  showView('admin-view');loadAdminData();window.scrollTo({top:0});
+  const pass=prompt('Введите пароль администратора:');
+  if(pass!==ADMIN_PASS){alert('Неверный пароль');return;}
+  showView('admin-view');
+  loadAdminData();
 }
-function closeAdmin(){showMainView();}
-function switchATab(tab,btn){
-  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
-  ['games','hosts','images'].forEach(t=>{document.getElementById('admin-'+t).style.display=t===tab?'':'none';});
-  if(tab==='images')loadAdminImgs();
-}
-async function loadAdminData(){await loadAdminGames();await loadAdminHosts();}
 
-async function loadAdminGames(){
-  const el=document.getElementById('adminGames');el.innerHTML='<div class="lwrap2"><div class="spin"></div></div>';
-  let gs=[];
-  if(sb){const{data,error}=await sb.from('games').select('*').order('start_at');if(!error)gs=data||[];}
-  else gs=demoGames(today);
-  el.innerHTML=!gs.length?'<p style="text-align:center;color:#999;padding:20px;">Нет игр</p>':gs.map(g=>`<div class="aitem"><div class="aitem-info"><h3>${g.title||tl(g.game_type)}</h3><p>${fd(new Date(g.start_at))} · ${ft(g.start_at)} · ${g.price}₽</p></div><div class="aitem-actions"><button class="edit" onclick="showGameForm('${g.id}')">Редактировать</button><button class="del" onclick="delGame('${g.id}')">Удалить</button></div></div>`).join('');
+function closeAdmin(){showView('main-view');}
+
+function switchATab(tab,btn){
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.apanel').forEach(p=>p.style.display='none');
+  document.getElementById('admin-'+tab).style.display='block';
 }
-async function loadAdminHosts(){
-  const el=document.getElementById('adminHosts');el.innerHTML='<div class="lwrap2"><div class="spin"></div></div>';
-  let hs=[];
-  if(sb){const{data,error}=await sb.from('hosts').select('*').order('name');if(!error)hs=data||[];}
-  else hs=[{id:'1',name:'Дядя Коля',role:'мастер'},{id:'2',name:'Дядя Боря',role:'ведущий'}];
-  el.innerHTML=!hs.length?'<p style="text-align:center;color:#999;padding:20px;">Нет ведущих</p>':hs.map(h=>`<div class="aitem"><div class="aitem-info"><h3>${h.name}</h3><p>${h.role}</p></div><div class="aitem-actions"><button class="edit" onclick="showHostForm('${h.id}')">Редактировать</button><button class="del" onclick="delHost('${h.id}')">Удалить</button></div></div>`).join('');
+
+async function loadAdminData(){
+  await loadAdminGames();
+  await loadAdminHosts();
+  await loadAdminImages();
+}
+
+// ====== GAMES ======
+async function loadAdminGames(){
+  const list=document.getElementById('adminGames');
+  list.innerHTML='<div class="lwrap2"><div class="spin"></div></div>';
+  try{
+    let games=[];
+    if(sb){
+      const{data,error}=await sb.from('games').select('*').order('start_at');
+      if(error)throw error;
+      games=data||[];
+    }else{games=demoGames(today);}
+    if(!games.length){list.innerHTML='<p style="text-align:center;color:var(--muted);">Нет игр</p>';return;}
+    list.innerHTML=games.map(g=>`<div class="aitem"><div class="aitem-info"><h3>${g.title||tl(g.game_type)}</h3><p>${fd(new Date(g.start_at))} · ${ft(g.start_at)} · ${g.price}₽</p></div><div class="aitem-actions"><button class="edit" onclick="editGame('${g.id}')">Редактировать</button><button class="del" onclick="delGame('${g.id}')">Удалить</button></div></div>`).join('');
+  }catch(e){list.innerHTML='<p style="color:red;">Ошибка: '+e.message+'</p>';}
 }
 
 function showGameForm(id=null){
   document.getElementById('gfTitle').textContent=id?'Редактировать игру':'Новая игра';
   document.getElementById('gId').value=id||'';
-  ['gTitle','gSub','gHostN','gOrgN','gCover'].forEach(f=>document.getElementById(f).value='');
-  document.getElementById('gHostR').value='мастер';
-  if(id){const g=allG.find(x=>String(x.id)===String(id));if(g){document.getElementById('gTitle').value=g.title||'';document.getElementById('gSub').value=g.subtitle||'';document.getElementById('gType').value=g.game_type||'city_mafia';document.getElementById('gStart').value=new Date(g.start_at).toISOString().slice(0,16);document.getElementById('gEnd').value=new Date(g.end_at).toISOString().slice(0,16);document.getElementById('gLoc').value=g.location||'';document.getElementById('gPrice').value=g.price||1500;document.getElementById('gSeats').value=g.max_seats||10;document.getElementById('gHostN').value=g.host_name||'';document.getElementById('gHostR').value=g.host_role||'мастер';document.getElementById('gOrgN').value=g.organizer_name||'';document.getElementById('gCover').value=g.cover_image_url||'';}}
-  document.getElementById('gameModal').classList.add('open');document.body.style.overflow='hidden';
+  if(id){
+    const g=allG.find(x=>String(x.id)===String(id));
+    if(g){
+      document.getElementById('gTitle').value=g.title||'';
+      document.getElementById('gSub').value=g.subtitle||'';
+      document.getElementById('gType').value=g.game_type||'city_mafia';
+      document.getElementById('gStart').value=new Date(g.start_at).toISOString().slice(0,16);
+      document.getElementById('gEnd').value=new Date(g.end_at).toISOString().slice(0,16);
+      document.getElementById('gLoc').value=g.location||'';
+      document.getElementById('gPrice').value=g.price||1500;
+      document.getElementById('gSeats').value=g.max_seats||10;
+      document.getElementById('gHostN').value=g.host_name||'';
+      document.getElementById('gHostR').value=g.host_role||'мастер';
+      document.getElementById('gOrgN').value=g.organizer_name||'';
+      document.getElementById('gCover').value=g.cover_image_url||'';
+    }
+  }else{
+    document.getElementById('gTitle').value='';
+    document.getElementById('gSub').value='';
+    document.getElementById('gType').value='city_mafia';
+    document.getElementById('gStart').value='';
+    document.getElementById('gEnd').value='';
+    document.getElementById('gLoc').value='Библиотека (Большой Путинковский пер., 5, м. Пушкинская)';
+    document.getElementById('gPrice').value='1500';
+    document.getElementById('gSeats').value='10';
+    document.getElementById('gHostN').value='';
+    document.getElementById('gHostR').value='мастер';
+    document.getElementById('gOrgN').value='';
+    document.getElementById('gCover').value='';
+  }
+  document.getElementById('gameModal').classList.add('open');
+  document.body.style.overflow='hidden';
 }
-function closeGameForm(){document.getElementById('gameModal').classList.remove('open');document.body.style.overflow='';}
+
+function closeGameForm(){
+  document.getElementById('gameModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
 async function saveGame(e){
   e.preventDefault();
   const id=document.getElementById('gId').value;
-  const data={title:document.getElementById('gTitle').value,subtitle:document.getElementById('gSub').value||null,game_type:document.getElementById('gType').value,start_at:new Date(document.getElementById('gStart').value).toISOString(),end_at:new Date(document.getElementById('gEnd').value).toISOString(),location:document.getElementById('gLoc').value,price:parseInt(document.getElementById('gPrice').value),max_seats:parseInt(document.getElementById('gSeats').value),host_name:document.getElementById('gHostN').value,host_role:document.getElementById('gHostR').value,organizer_name:document.getElementById('gOrgN').value||null,cover_image_url:document.getElementById('gCover').value||null,status:'scheduled'};
-  if(!sb){alert('Демо-режим: сохранение недоступно');closeGameForm();return;}
-  const{error}=await(id?sb.from('games').update(data).eq('id',id):sb.from('games').insert(data));
-  if(error){alert('Ошибка: '+error.message);return;}
-  alert('✅ Игра сохранена!');closeGameForm();loadAdminGames();loadGames();
+  const data={
+    title:document.getElementById('gTitle').value,
+    subtitle:document.getElementById('gSub').value||null,
+    game_type:document.getElementById('gType').value,
+    start_at:new Date(document.getElementById('gStart').value).toISOString(),
+    end_at:new Date(document.getElementById('gEnd').value).toISOString(),
+    location:document.getElementById('gLoc').value,
+    price:parseInt(document.getElementById('gPrice').value),
+    max_seats:parseInt(document.getElementById('gSeats').value),
+    host_name:document.getElementById('gHostN').value,
+    host_role:document.getElementById('gHostR').value||'мастер',
+    organizer_name:document.getElementById('gOrgN').value||null,
+    cover_image_url:document.getElementById('gCover').value||null,
+    status:'scheduled'
+  };
+  if(!sb){alert('Демо-режим: данные не сохраняются');closeGameForm();return;}
+  try{
+    let res;
+    if(id){res=await sb.from('games').update(data).eq('id',id);}
+    else{res=await sb.from('games').insert(data);}
+    if(res.error)throw res.error;
+    alert('✅ Игра сохранена!');
+    closeGameForm();
+    loadAdminGames();
+    loadGames();
+  }catch(e){alert('Ошибка: '+e.message);}
 }
+
+function editGame(id){showGameForm(id);}
+
 async function delGame(id){
-  if(!confirm('Удалить игру?'))return;if(!sb){alert('Демо-режим');return;}
-  const{error}=await sb.from('games').delete().eq('id',id);
-  if(error){alert('Ошибка: '+error.message);return;}
-  loadAdminGames();loadGames();
+  if(!confirm('Удалить игру?'))return;
+  if(!sb){alert('Демо-режим');return;}
+  try{
+    const{error}=await sb.from('games').delete().eq('id',id);
+    if(error)throw error;
+    alert('✅ Удалено');
+    loadAdminGames();
+    loadGames();
+  }catch(e){alert('Ошибка: '+e.message);}
+}
+
+// ====== HOSTS ======
+async function loadAdminHosts(){
+  const list=document.getElementById('adminHosts');
+  list.innerHTML='<div class="lwrap2"><div class="spin"></div></div>';
+  try{
+    let hosts=[];
+    if(sb){
+      const{data,error}=await sb.from('hosts').select('*').order('name');
+      if(error)throw error;
+      hosts=data||[];
+    }else{hosts=[{id:1,name:'Дядя Коля',role:'мастер'},{id:2,name:'Дядя Боря',role:'ведущий'},{id:3,name:'Артём',role:'мастер'}];}
+    if(!hosts.length){list.innerHTML='<p style="text-align:center;color:var(--muted);">Нет ведущих</p>';return;}
+    list.innerHTML=hosts.map(h=>`<div class="aitem"><div class="aitem-info"><h3>${h.name}</h3><p>${h.role}</p></div><div class="aitem-actions"><button class="edit" onclick="editHost('${h.id}')">Редактировать</button><button class="del" onclick="delHost('${h.id}')">Удалить</button></div></div>`).join('');
+  }catch(e){list.innerHTML='<p style="color:red;">Ошибка: '+e.message+'</p>';}
 }
 
 function showHostForm(id=null){
   document.getElementById('hfTitle').textContent=id?'Редактировать ведущего':'Новый ведущий';
   document.getElementById('hId').value=id||'';
-  ['hName','hRole','hPhoto'].forEach(f=>document.getElementById(f).value='');
-  document.getElementById('hostModal').classList.add('open');document.body.style.overflow='hidden';
+  document.getElementById('hName').value='';
+  document.getElementById('hRole').value='';
+  document.getElementById('hPhoto').value='';
+  document.getElementById('hostModal').classList.add('open');
+  document.body.style.overflow='hidden';
 }
-function closeHostForm(){document.getElementById('hostModal').classList.remove('open');document.body.style.overflow='';}
+
+function closeHostForm(){
+  document.getElementById('hostModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
 async function saveHost(e){
   e.preventDefault();
   const id=document.getElementById('hId').value;
-  const data={name:document.getElementById('hName').value,role:document.getElementById('hRole').value,photo_url:document.getElementById('hPhoto').value||null};
+  const data={
+    name:document.getElementById('hName').value,
+    role:document.getElementById('hRole').value,
+    photo_url:document.getElementById('hPhoto').value||null
+  };
   if(!sb){alert('Демо-режим');closeHostForm();return;}
-  const{error}=await(id?sb.from('hosts').update(data).eq('id',id):sb.from('hosts').insert(data));
-  if(error){alert('Ошибка: '+error.message);return;}
-  alert('✅ Ведущий сохранён!');closeHostForm();loadAdminHosts();
-}
-async function delHost(id){
-  if(!confirm('Удалить?'))return;if(!sb){alert('Демо-режим');return;}
-  const{error}=await sb.from('hosts').delete().eq('id',id);
-  if(error){alert('Ошибка: '+error.message);return;}
-  loadAdminHosts();
+  try{
+    let res;
+    if(id){res=await sb.from('hosts').update(data).eq('id',id);}
+    else{res=await sb.from('hosts').insert(data);}
+    if(res.error)throw res.error;
+    alert('✅ Сохранено!');
+    closeHostForm();
+    loadAdminHosts();
+  }catch(e){alert('Ошибка: '+e.message);}
 }
 
-async function loadAdminImgs(){
-  const el=document.getElementById('imgList');
-  if(!sb){el.innerHTML='<p style="text-align:center;color:#999;padding:20px;">Нужна реальная БД для загрузки картинок</p>';return;}
-  el.innerHTML='<div class="lwrap2"><div class="spin"></div></div>';
+function editHost(id){showHostForm(id);}
+
+async function delHost(id){
+  if(!confirm('Удалить?'))return;
+  if(!sb){alert('Демо-режим');return;}
   try{
-    const{data,error}=await sb.storage.from('images').list();if(error)throw error;
-    if(!data?.length){el.innerHTML='<p style="text-align:center;color:#999;padding:20px;">Нет картинок. Загрузите первую выше.</p>';return;}
-    const imgs=await Promise.all(data.map(async f=>{const{data:u}=await sb.storage.from('images').getPublicUrl(f.name);return{name:f.name,url:u.publicUrl};}));
-    el.innerHTML=imgs.map(img=>`<div class="imgcard"><img src="${img.url}" alt="${img.name}" loading="lazy"><div class="imgcopy" onclick="navigator.clipboard.writeText('${img.url}').then(()=>alert('URL скопирован!'))">Копировать</div><div class="imgurl">${img.url}</div></div>`).join('');
-  }catch(e){el.innerHTML='<p style="color:#dc2626;padding:20px;">Ошибка: '+e.message+'</p>';}
+    const{error}=await sb.from('hosts').delete().eq('id',id);
+    if(error)throw error;
+    alert('✅ Удалено');
+    loadAdminHosts();
+  }catch(e){alert('Ошибка: '+e.message);}
 }
-async function uploadImg(){
-  const file=document.getElementById('imgFile').files[0],st=document.getElementById('ustatus');
-  if(!file){alert('Выберите файл');return;}
-  if(!sb){alert('Нужна реальная БД');return;}
-  st.textContent='Загружаем...';st.style.color='var(--blue)';
+
+// ====== IMAGES ======
+async function loadAdminImages(){
+  const grid=document.getElementById('imgList');
+  grid.innerHTML='<div class="lwrap2"><div class="spin"></div></div>';
+  if(!sb){grid.innerHTML='<p style="text-align:center;color:var(--muted);">Демо-режим: загрузка недоступна</p>';return;}
   try{
-    const name=Date.now()+'-'+file.name;const{error}=await sb.storage.from('images').upload(name,file);if(error)throw error;
-    const{data}=await sb.storage.from('images').getPublicUrl(name);
-    st.textContent='✅ Загружено! URL: '+data.publicUrl;st.style.color='var(--green)';
-    document.getElementById('imgFile').value='';loadAdminImgs();
+    const{data,error}=await sb.storage.from('images').list();
+    if(error)throw error;
+    if(!data||!data.length){grid.innerHTML='<p style="text-align:center;color:var(--muted);">Нет картинок</p>';return;}
+    const imgs=await Promise.all(data.map(async f=>{const{data:u}=await sb.storage.from('images').getPublicUrl(f.name);return{name:f.name,url:u.publicUrl};}));
+    grid.innerHTML=imgs.map(i=>`<div class="imgcard"><img src="${i.url}" alt="${i.name}"><div class="imgcopy" onclick="copyUrl('${i.url}')">Копировать</div><div class="imgurl">${i.url}</div></div>`).join('');
+  }catch(e){grid.innerHTML='<p style="color:red;">Ошибка: '+e.message+'</p>';}
+}
+
+async function uploadImg(){
+  const file=document.getElementById('imgFile').files[0];
+  if(!file){alert('Выберите файл');return;}
+  if(!sb){alert('Демо-режим');return;}
+  const st=document.getElementById('ustatus');
+  st.textContent='Загрузка...';
+  st.style.color='var(--blue)';
+  try{
+    const fn=Date.now()+'-'+file.name;
+    const{error}=await sb.storage.from('images').upload(fn,file);
+    if(error)throw error;
+    const{data}=await sb.storage.from('images').getPublicUrl(fn);
+    st.textContent='✅ Загружено! URL: '+data.publicUrl;
+    st.style.color='var(--green)';
+    document.getElementById('imgFile').value='';
+    loadAdminImages();
   }catch(e){st.textContent='❌ '+e.message;st.style.color='var(--red)';}
 }
 
-(async()=>{renderAbout();renderPF();renderDates();await initDB();await loadGames();})();
+function copyUrl(url){
+  navigator.clipboard.writeText(url).then(()=>alert('✅ URL скопирован'));
+}
+
+// ====== HELPERS ======
+function showView(view){
+  document.getElementById('main-view').style.display='none';
+  document.getElementById('profile-view').style.display='none';
+  document.getElementById('game-detail-view').style.display='none';
+  document.getElementById('admin-view').style.display='none';
+  document.getElementById(view).style.display='block';
+  window.scrollTo({top:0});
+}
+
+function showMainView(){showView('main-view');}
+function showProfile(){showView('profile-view');renderProfile();}
+function goHome(){showMainView();window.scrollTo({top:0,behavior:'smooth'});}
+function goToSchedule(){showMainView();requestAnimationFrame(()=>document.querySelector('.cal-section').scrollIntoView({behavior:'smooth'}));}
+function goToAbout(){showMainView();requestAnimationFrame(()=>document.getElementById('aboutSec').scrollIntoView({behavior:'smooth'}));}
+function goToContacts(){showMainView();requestAnimationFrame(()=>document.querySelector('footer').scrollIntoView({behavior:'smooth'}));}
+
+// ====== INIT ======
+(async function(){
+  await initDB();
+  renderDates();
+  await loadGames();
+  renderAbout();
+  renderProfile();
+})();
+  
 </script>
 </body>
 </html>
