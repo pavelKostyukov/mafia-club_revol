@@ -378,7 +378,9 @@ footer .brand{font-weight:600;color:var(--txt2);font-size:14px;margin-bottom:6px
 <div class="dsec">Администрирование</div>
 <a onclick="closeDrawer();openAdmin()"><span class="dic"></span>Админ-панель</a>
 </nav>
-<div class="dfoot"><button class="loginbtn" onclick="alert('Скоро: вход через Telegram')">Войти через Telegram</button></div>
+<div id="authFooter">
+  <button class="loginbtn" id="loginBtn" onclick="yandexLogin()">Войти через Яндекс</button>
+</div>
 </aside>
 
 <div id="main-view">
@@ -719,22 +721,28 @@ function closeDrawer(){document.getElementById('drawer').classList.remove('open'
 const DEFPF={name:'Всеволод',title:'Мистер Икс',star:'звезда',badge:'Цари',ava:'avatar-vsevolod.png',stats:{cm:{g:15,w:10},sm:{g:55,w:32},d:{g:2,w:0}}};
 function loadPF(){try{const s=localStorage.getItem('mfpf');if(s)return{...DEFPF,...JSON.parse(s)};}catch(e){}return{...DEFPF};}
 function savePF(p){try{localStorage.setItem('mfpf',JSON.stringify(p));}catch(e){}}
-function renderPF(){
-const p=loadPF();
-document.getElementById('pf-name').textContent=p.name;
-document.getElementById('pf-title').textContent=p.title;
-document.getElementById('pf-star').textContent=p.star;
-document.getElementById('pf-badge').textContent=p.badge;
-document.getElementById('pf-ava').style.backgroundImage=`url('${p.ava}')`;
-document.getElementById('pf-cm-g').textContent=p.stats.cm.g;
-document.getElementById('pf-cm-w').textContent=p.stats.cm.w;
-document.getElementById('pf-sm-g').textContent=p.stats.sm.g;
-document.getElementById('pf-sm-w').textContent=p.stats.sm.w;
-document.getElementById('pf-d-g').textContent=p.stats.d.g;
-document.getElementById('pf-d-w').textContent=p.stats.d.w;
-const aH=`<img src="${p.ava}" alt="" style="width:100%;height:100%;object-fit:cover;">`;
-document.getElementById('navAvatar').innerHTML=aH;
-document.getElementById('drawerAva').innerHTML=aH;
+function renderPF() {
+  // Если пользователь авторизован — используем данные из БД
+  const p = currentUser || loadPF();
+
+  document.getElementById('pf-name').textContent = p.name || 'Гость';
+  document.getElementById('pf-title').textContent = p.title || '—';
+  document.getElementById('pf-star').textContent = p.star_status || p.star || '—';
+  document.getElementById('pf-badge').textContent = p.badge || '—';
+
+  const ava = p.avatar_url || p.ava || '';
+  document.getElementById('pf-ava').style.backgroundImage = ava ? `url('${ava}')` : '';
+
+  document.getElementById('pf-cm-g').textContent = p.city_mafia_games ?? p.stats?.cm?.g ?? 0;
+  document.getElementById('pf-cm-w').textContent = p.city_mafia_wins ?? p.stats?.cm?.w ?? 0;
+  document.getElementById('pf-sm-g').textContent = p.sport_mafia_games ?? p.stats?.sm?.g ?? 0;
+  document.getElementById('pf-sm-w').textContent = p.sport_mafia_wins ?? p.stats?.sm?.w ?? 0;
+  document.getElementById('pf-d-g').textContent = p.dice_games ?? p.stats?.d?.g ?? 0;
+  document.getElementById('pf-d-w').textContent = p.dice_wins ?? p.stats?.d?.w ?? 0;
+
+  const aH = ava ? `<img src="${ava}" alt="" style="width:100%;height:100%;object-fit:cover;">` : av(0);
+  document.getElementById('navAvatar').innerHTML = aH;
+  document.getElementById('drawerAva').innerHTML = aH;
 }
 function editPF(f){const p=loadPF(),lbl={name:'Имя',title:'Звание',star:'Статус'}[f],v=prompt(lbl+':',p[f]);if(v!==null&&v.trim()){p[f]=v.trim();savePF(p);renderPF();}}
 function uploadAva(e){const f=e.target.files[0];if(!f)return;if(f.size>2*1024*1024){alert('Файл больше 2 МБ');return;}const r=new FileReader();r.onload=ev=>{const p=loadPF();p.ava=ev.target.result;savePF(p);renderPF();};r.readAsDataURL(f);}
@@ -932,12 +940,193 @@ function goToAbout(){showMainView();requestAnimationFrame(()=>document.getElemen
 function goToContacts(){showMainView();requestAnimationFrame(()=>document.querySelector('footer').scrollIntoView({behavior:'smooth'}));}
 
 (async function(){
-await initDB();
-renderDates();
-await loadGames();
-renderAbout();
-renderPF();
+  await initDB();
+  renderDates();
+  await loadGames();
+  renderAbout();
+
+  // Яндекс авторизация
+  const fromYandex = await handleYandexCallback();
+  if (!fromYandex) await restoreSession();
+
+  renderPF();
 })();
+
+  // =============================================
+// YANDEX AUTH
+// =============================================
+const YANDEX_CLIENT_ID = '62267ea2720142febee237c09f747690';
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+let currentUser = null; // { player_id, name, avatar_url, yandex_id, ... }
+
+function yandexLogin() {
+  const url = `https://oauth.yandex.ru/authorize`
+    + `?response_type=token`
+    + `&client_id=${YANDEX_CLIENT_ID}`
+    + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`
+    + `&force_confirm=false`;
+  window.location.href = url;
+}
+
+function yandexLogout() {
+  localStorage.removeItem('mafia_session');
+  currentUser = null;
+  renderAuthUI();
+}
+
+// Вызывается при старте — проверяем URL на токен (редирект от Яндекса)
+async function handleYandexCallback() {
+  const hash = window.location.hash;
+  if (!hash.includes('access_token')) return false;
+
+  const params = new URLSearchParams(hash.slice(1));
+  const token = params.get('access_token');
+  if (!token) return false;
+
+  // Чистим URL от токена
+  history.replaceState(null, '', window.location.pathname);
+
+  await loginWithYandexToken(token);
+  return true;
+}
+
+async function loginWithYandexToken(token) {
+  showAuthLoading(true);
+  try {
+    // Получаем данные пользователя от Яндекса
+    const res = await fetch('https://login.yandex.ru/info?format=json', {
+      headers: { Authorization: `OAuth ${token}` }
+    });
+    if (!res.ok) throw new Error('Yandex API error');
+    const ya = await res.json();
+
+    // ya содержит: id, login, real_name, default_email, default_avatar_id
+    const avatarUrl = ya.default_avatar_id
+      ? `https://avatars.yandex.net/get-yapic/${ya.default_avatar_id}/islands-200`
+      : null;
+
+    // Upsert в таблицу players
+    if (!sb) {
+      // Демо-режим — просто сохраняем локально
+      currentUser = { name: ya.real_name || ya.login, avatar_url: avatarUrl, yandex_id: ya.id };
+      localStorage.setItem('mafia_session', JSON.stringify({ token, user: currentUser }));
+      renderAuthUI();
+      return;
+    }
+
+    // Ищем существующего игрока
+    const { data: existing } = await sb
+      .from('players')
+      .select('*')
+      .eq('yandex_id', String(ya.id))
+      .maybeSingle();
+
+    let player;
+    if (existing) {
+      // Обновляем аватар и логин (могли измениться)
+      const { data: updated } = await sb
+        .from('players')
+        .update({ avatar_url: avatarUrl, yandex_login: ya.login, email: ya.default_email })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      player = updated || existing;
+    } else {
+      // Новый игрок
+      const { data: created, error } = await sb
+        .from('players')
+        .insert({
+          name: ya.real_name || ya.login,
+          yandex_id: String(ya.id),
+          yandex_login: ya.login,
+          email: ya.default_email,
+          real_name: ya.real_name,
+          avatar_url: avatarUrl,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      player = created;
+    }
+
+    currentUser = { ...player, yandex_token: token };
+    localStorage.setItem('mafia_session', JSON.stringify({ token, player_id: player.id }));
+    renderAuthUI();
+    renderPF(); // обновляем профиль на экране
+
+  } catch (e) {
+    console.error('Auth error:', e);
+    alert('Ошибка входа: ' + e.message);
+  } finally {
+    showAuthLoading(false);
+  }
+}
+
+// Восстанавливаем сессию из localStorage
+async function restoreSession() {
+  try {
+    const raw = localStorage.getItem('mafia_session');
+    if (!raw) return;
+    const { token, player_id } = JSON.parse(raw);
+    if (!token || !player_id || !sb) return;
+
+    const { data: player } = await sb
+      .from('players')
+      .select('*')
+      .eq('id', player_id)
+      .maybeSingle();
+
+    if (player) {
+      currentUser = { ...player, yandex_token: token };
+      renderAuthUI();
+      renderPF();
+    }
+  } catch (e) {
+    console.warn('Session restore failed:', e);
+  }
+}
+
+function renderAuthUI() {
+  const footer = document.getElementById('authFooter');
+  const drawerName = document.querySelector('.duname');
+  const drawerSub = document.querySelector('.dusub');
+  const navAva = document.getElementById('navAvatar');
+  const drawerAva = document.getElementById('drawerAva');
+
+  if (currentUser) {
+    // Залогинен
+    if (footer) footer.innerHTML = `
+      <div style="display:flex;gap:8px;flex-direction:column">
+        <div style="font-size:13px;color:var(--txt2);padding:0 2px">
+          Вы вошли как <b>${currentUser.name}</b>
+        </div>
+        <button class="loginbtn" style="background:var(--bg2);color:var(--text);border:1px solid var(--border)"
+          onclick="yandexLogout()">Выйти</button>
+      </div>`;
+
+    if (drawerName) drawerName.textContent = currentUser.name;
+    if (drawerSub) drawerSub.textContent = currentUser.title || currentUser.yandex_login || 'Игрок клуба';
+
+    const avaHtml = currentUser.avatar_url
+      ? `<img src="${currentUser.avatar_url}" style="width:100%;height:100%;object-fit:cover;">`
+      : av(0);
+    if (navAva) navAva.innerHTML = avaHtml;
+    if (drawerAva) drawerAva.innerHTML = avaHtml;
+  } else {
+    // Не залогинен
+    if (footer) footer.innerHTML = `
+      <button class="loginbtn" id="loginBtn" onclick="yandexLogin()">Войти через Яндекс</button>`;
+    if (drawerName) drawerName.textContent = 'Гость';
+    if (drawerSub) drawerSub.textContent = 'Войдите, чтобы записываться';
+  }
+}
+
+function showAuthLoading(on) {
+  const footer = document.getElementById('authFooter');
+  if (!footer) return;
+  if (on) footer.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px">Входим…</div>`;
+}
 </script>
 </body>
 </html>
