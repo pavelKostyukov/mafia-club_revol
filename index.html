@@ -510,7 +510,7 @@ footer .brand{font-weight:600;color:var(--txt2);font-size:14px;margin-bottom:6px
 <label>Макс. мест</label><input type="number" id="gSeats" value="10" required>
 <label>Ведущий (имя)</label><input type="text" id="gHostN" placeholder="Дядя Коля" required>
 <label>Роль ведущего</label><input type="text" id="gHostR" value="мастер">
-<label>URL фото ведущего</label><input type="text" id="gHostPhoto" placeholder="https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg">
+<label>URL фото ведущего</label><input type="text" id="gHostPhoto" placeholder="https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg">
 <label>Организатор</label><input type="text" id="gOrgN" placeholder="Дядя Боря">
 <label>URL фото организатора</label><input type="text" id="gOrgPhoto" placeholder="https://...">
 <label>URL обложки</label><input type="text" id="gCover" placeholder="https://...">
@@ -560,7 +560,7 @@ const tl=t=>({city_mafia:'Городская мафия',sport_mafia:'Спорт
 
 function av(s=0){
 const c=['#c08555','#b87a5c','#a86a4f','#d4a574','#c19273','#b58a6d'][s%6];
-return`<svg viewBox="0 0 60 60" xmlns="https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/dbe687261da78292349e8a995417b668d41afe91.jpg"</svg>`;
+return`<svg viewBox="0 0 60 60" xmlns="https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg"</svg>`;
 }
 
 const today=(()=>{const d=new Date();d.setHours(0,0,0,0);return d;})();
@@ -582,8 +582,8 @@ function demoGames(date){
 const off=Math.round((date-today)/86400000),idx=((off%7)+7)%7;
 const d=(h,m,pd=0)=>{const x=new Date(date);x.setDate(x.getDate()+pd);x.setHours(h,m,0,0);return x.toISOString();};
 const lib='Библиотека (Большой Путинковский пер., 5, м. Пушкинская)';
-const mk=o=>({id:`d${idx}-${o.id||Math.random().toString(36).slice(2,6)}`,title:'Городская мафия',subtitle:null,game_type:'city_mafia',cover_image_url:'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/5e156eb21ee9146042a8475e6b286e4be19b6b85.jpg',start_at:d(19,0),end_at:d(22,0),location:lib,price:1500,max_seats:10,host_name:'Дядя Коля',host_role:'мастер',host_photo_url:null,organizer_name:null,organizer_photo_url:null,registrations:[],...o});
-if(idx===0)return[mk({id:'tsar',title:'Царский',subtitle:'Великолепный праздник мафии от дяди Бори и дяди Коли',cover_image_url:'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg',start_at:d(19,0),end_at:d(23,45),price:5500,max_seats:15,registrations:Array(15).fill({status:'confirmed'})}),mk({id:'gm',start_at:d(19,0),end_at:d(22,0),price:1500,max_seats:12,registrations:Array(10).fill({status:'confirmed'})}),mk({id:'c1',title:'Кубики',game_type:'dice',start_at:d(19,0),price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})}),mk({id:'c2',title:'Кубики',game_type:'dice',start_at:d(19,0),price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})}),mk({id:'c3',title:'Кубики',game_type:'dice',start_at:d(19,0),price:300,max_seats:6,registrations:[]}),mk({id:'leg',title:'Легендарити',subtitle:'Великолепный праздник мафии',cover_image_url:'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/dbe687261da78292349e8a995417b668d41afe91.jpg',start_at:d(22,0),end_at:d(2,30,1),price:5500,max_seats:16,host_role:'ведущий',organizer_name:'Дядя Боря',organizer_role:'организатор',topBrand:true,likes:5,registrations:Array(14).fill({status:'confirmed'})})];
+const mk=o=>({id:`d${idx}-${o.id||Math.random().toString(36).slice(2,6)}`,title:'Городская мафия',subtitle:null,game_type:'city_mafia',cover_image_url:'https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg',start_at:d(19,0),end_at:d(22,0),location:lib,price:1500,max_seats:10,host_name:'Дядя Коля',host_role:'мастер',host_photo_url:null,organizer_name:null,organizer_photo_url:null,registrations:[],...o});
+if(idx===0)return[mk({id:'tsar',title:'Царский',subtitle:'Великолепный праздник мафии от дяди Бори и дяди Коли',cover_image_url:'https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg',start_at:d(19,0),end_at:d(23,45),price:5500,max_seats:15,registrations:Array(15).fill({status:'confirmed'})}),mk({id:'gm',start_at:d(19,0),end_at:d(22,0),price:1500,max_seats:12,registrations:Array(10).fill({status:'confirmed'})}),mk({id:'c1',title:'Кубики',game_type:'dice',start_at:d(19,0),price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})}),mk({id:'c2',title:'Кубики',game_type:'dice',start_at:d(19,0),price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})}),mk({id:'c3',title:'Кубики',game_type:'dice',start_at:d(19,0),price:300,max_seats:6,registrations:[]}),mk({id:'leg',title:'Легендарити',subtitle:'Великолепный праздник мафии',cover_image_url:'https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg',start_at:d(22,0),end_at:d(2,30,1),price:5500,max_seats:16,host_role:'ведущий',organizer_name:'Дядя Боря',organizer_role:'организатор',topBrand:true,likes:5,registrations:Array(14).fill({status:'confirmed'})})];
 if(idx===1)return[mk({id:'sm',title:'Спортивная мафия',game_type:'sport_mafia',start_at:d(19,0),end_at:d(23,0),price:1800,max_seats:10,host_name:'Артём',registrations:Array(5).fill({status:'confirmed'})}),mk({id:'gm',start_at:d(20,0),end_at:d(23,30),host_name:'Дядя Боря',host_role:'ведущий',max_seats:12,registrations:Array(4).fill({status:'confirmed'})})];
 if(idx===2)return[mk({id:'tour',title:'Турнирная мафия',subtitle:'Отборочный этап',game_type:'sport_mafia',start_at:d(19,0),end_at:d(23,0),price:2500,max_seats:10,host_name:'Артём',registrations:Array(7).fill({status:'confirmed'})})];
 if(idx===3)return[mk({id:'c1',title:'Кубики',game_type:'dice',start_at:d(19,0),end_at:d(22,30),price:300,max_seats:6,registrations:Array(2).fill({status:'confirmed'})}),mk({id:'c2',title:'Кубики',game_type:'dice',start_at:d(19,0),end_at:d(22,30),price:300,max_seats:6,registrations:Array(1).fill({status:'confirmed'})})];
@@ -789,7 +789,7 @@ document.getElementById('gPrice').value=g.price||1500;
 document.getElementById('gSeats').value=g.max_seats||10;
 document.getElementById('gHostN').value=g.host_name||'';
 document.getElementById('gHostR').value=g.host_role||'мастер';
-document.getElementById('gHostPhoto').value=g.host_photo_url||'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg';
+document.getElementById('gHostPhoto').value=g.host_photo_url||'https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg';
 document.getElementById('gOrgN').value=g.organizer_name||'';
 document.getElementById('gOrgPhoto').value=g.organizer_photo_url||'';
 document.getElementById('gCover').value=g.cover_image_url||'';
@@ -805,7 +805,7 @@ document.getElementById('gPrice').value='1500';
 document.getElementById('gSeats').value='10';
 document.getElementById('gHostN').value='';
 document.getElementById('gHostR').value='мастер';
-document.getElementById('gHostPhoto').value='https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg';
+document.getElementById('gHostPhoto').value='https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg';
 document.getElementById('gOrgN').value='';
 document.getElementById('gOrgPhoto').value='';
 document.getElementById('gCover').value='';
@@ -828,10 +828,10 @@ price:parseInt(document.getElementById('gPrice').value),
 max_seats:parseInt(document.getElementById('gSeats').value),
 host_name:document.getElementById('gHostN').value,
 host_role:document.getElementById('gHostR').value||'мастер',
-host_photo_url:document.getElementById('gHostPhoto').value||'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg',
+host_photo_url:document.getElementById('gHostPhoto').value||'https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg',
 organizer_name:document.getElementById('gOrgN').value||null,
 organizer_role:'организатор',
-organizer_photo_url:document.getElementById('gOrgPhoto').value||'https://fzkdgfsdjpaptmiwvjbe.supabase.co/storage/v1/object/public/images/763ae73bb4fc6f3eca6cf752e3595a784dc7bf26.jpg',
+organizer_photo_url:document.getElementById('gOrgPhoto').value||'https://storage.yandexcloud.net/mafia-club-images/4fe81e02e365bb81e184d03ddc65d0b6aad578e2.jpg',
 cover_image_url:document.getElementById('gCover').value||null,
 status:'scheduled'
 };
