@@ -1280,11 +1280,7 @@ async function handleYandexCallback(){
   await loginWithToken(token);
   return true;
 }
-async function loginWithToken(token){
-  const footer=document.getElementById('authFooter');
-  if(footer)footer.innerHTML='<div style="text-align:center;padding:12px;font-size:13px;color:var(--blue);display:flex;align-items:center;justify-content:center;gap:8px"><div class="spin" style="width:18px;height:18px;border-width:2px;border-top-color:var(--blue);border-color:var(--border);"></div>Загружаем профиль из Яндекса...</div>';
 
-// Показываем уведомление вверху страницы
 async function loginWithToken(token){
   showToast('⏳ Авторизация через Яндекс...');
   try{
@@ -1330,11 +1326,6 @@ async function loginWithToken(token){
     showToast('❌ Ошибка входа: '+e.message,'red');
     renderAuthUI();
   }
-}
-
-  function imgH(url){
-  if(!url)return av(0);
-  return `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.replaceWith(document.createRange().createContextualFragment('${av(0)}'))">`;
 }
   
 async function restoreSession(){
