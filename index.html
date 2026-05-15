@@ -396,6 +396,8 @@ footer .brand{font-weight:600;color:var(--txt2);font-size:14px;margin-bottom:5px
 </style>
 </head>
 <body>
+  <div id="debug" style="position:fixed;bottom:0;left:0;right:0;background:red;color:white;font-size:12px;padding:8px;z-index:9999;"></div>
+
 <nav class="nav">
 <div class="navi">
 <button class="burger" onclick="openDrawer()"><span></span><span></span><span></span></button>
@@ -1411,6 +1413,12 @@ function renderAuthUI(){
   const fromYandex=await handleYandexCallback();
   if(!fromYandex)await restoreSession();
   // renderPF вызывается внутри showProfile/restoreSession
+  setInterval(()=>{
+  document.getElementById('debug').textContent=
+    'user:'+(currentUser?currentUser.name:'null')+
+    ' profile-view:'+document.getElementById('profile-view').style.display+
+    ' auth:'+document.getElementById('profile-auth').style.display;
+},500);
 })();
 </script>
 </body>
