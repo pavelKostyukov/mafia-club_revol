@@ -1237,6 +1237,19 @@ function switchDoc(key){
   `;
 }
 
+function showToast(msg,type='blue'){
+  document.querySelectorAll('.toast-msg').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='toast-msg';
+  const bg=type==='green'?'#16a34a':type==='red'?'#dc2626':'#1d6eea';
+  t.style.cssText=`position:fixed;top:70px;left:50%;transform:translateX(-50%);
+    background:${bg};color:white;padding:10px 20px;border-radius:8px;font-size:13px;
+    z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);white-space:nowrap;transition:opacity .3s`;
+  t.textContent=msg;
+  document.body.appendChild(t);
+  if(type!=='blue')setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3000);
+}
+
 // =================== YANDEX AUTH ===================
 function yandexLogin(){
   const btn=document.getElementById('loginBtn');
@@ -1272,21 +1285,26 @@ async function loginWithToken(token){
   if(footer)footer.innerHTML='<div style="text-align:center;padding:12px;font-size:13px;color:var(--blue);display:flex;align-items:center;justify-content:center;gap:8px"><div class="spin" style="width:18px;height:18px;border-width:2px;border-top-color:var(--blue);border-color:var(--border);"></div>Загружаем профиль из Яндекса...</div>';
 
 // Показываем уведомление вверху страницы
-const toast=document.createElement('div');
-toast.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1d6eea;color:white;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
-toast.textContent='⏳ Входим через Яндекс...';
-document.body.appendChild(toast);
-setTimeout(()=>toast.remove(),5000);
+async function loginWithToken(token){
+  showToast('⏳ Авторизация через Яндекс...');
   try{
     const res=await fetch('https://login.yandex.ru/info?format=json',{headers:{Authorization:'OAuth '+token}});
-    if(!res.ok)throw new Error('Яндекс вернул ошибку '+res.status);
+    if(!res.ok)throw new Error('Яндекс: ошибка '+res.status);
     const ya=await res.json();
-    const avatarUrl=ya.default_avatar_id?'https://avatars.yandex.net/get-yapic/'+ya.default_avatar_id+'/islands-200':null;
+    const avatarUrl=ya.default_avatar_id
+      ?'https://avatars.yandex.net/get-yapic/'+ya.default_avatar_id+'/islands-200'
+      :null;
     if(!sb){
-      currentUser={id:null,name:ya.real_name||ya.login,title:'',star_status:'',badge:'',avatar_url:avatarUrl,yandex_id:ya.id,yandex_login:ya.login,city_mafia_games:0,city_mafia_wins:0,sport_mafia_games:0,sport_mafia_wins:0,dice_games:0,dice_wins:0};
+      currentUser={id:null,name:ya.real_name||ya.login,title:'',star_status:'',badge:'',
+        avatar_url:avatarUrl,yandex_id:ya.id,city_mafia_games:0,city_mafia_wins:0,
+        sport_mafia_games:0,sport_mafia_wins:0,dice_games:0,dice_wins:0};
       localStorage.setItem('mafia_session',JSON.stringify({demo:true,user:currentUser}));
-      renderAuthUI();renderPF();return;
+      showToast('✅ Вошли как '+currentUser.name,'green');
+      renderAuthUI();
+      showProfile();
+      return;
     }
+    showToast('⏳ Ищем профиль в базе...');
     const{data:existing}=await sb.from('players').select('*').eq('yandex_id',String(ya.id)).maybeSingle();
     let player;
     if(existing){
@@ -1304,29 +1322,43 @@ setTimeout(()=>toast.remove(),5000);
     }
     currentUser={...player,yandex_token:token};
     localStorage.setItem('mafia_session',JSON.stringify({token,player_id:player.id}));
-    renderAuthUI();renderPF();
-    const ok=document.createElement('div');
-ok.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16a34a;color:white;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
-ok.textContent='✅ Вы вошли как '+player.name;
-document.body.appendChild(ok);
-setTimeout(()=>ok.remove(),3000);
+    showToast('✅ Вы вошли как '+player.name,'green');
+    renderAuthUI();
+    showProfile(); // сразу показываем профиль
   }catch(e){
-    console.error('❌ Auth error:',e);
-    alert('Ошибка входа: '+e.message+'\n\nПроверьте Redirect URI в Яндекс OAuth:\n'+REDIRECT_URI);
+    console.error(e);
+    showToast('❌ Ошибка входа: '+e.message,'red');
     renderAuthUI();
   }
 }
+
+  function imgH(url){
+  if(!url)return av(0);
+  return `<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.replaceWith(document.createRange().createContextualFragment('${av(0)}'))">`;
+}
+  
 async function restoreSession(){
   try{
-    const raw=localStorage.getItem('mafia_session');if(!raw)return;
+    const raw=localStorage.getItem('mafia_session');
+    if(!raw)return;
     const sess=JSON.parse(raw);
-    if(sess.demo&&sess.user){currentUser=sess.user;renderAuthUI();renderPF();return;}
+    if(sess.demo&&sess.user){
+      currentUser=sess.user;
+      renderAuthUI();
+      renderPF();
+      return;
+    }
     if(!sess.token||!sess.player_id||!sb)return;
     const{data:player}=await sb.from('players').select('*').eq('id',sess.player_id).maybeSingle();
-    if(player){currentUser={...player,yandex_token:sess.token};renderAuthUI();renderPF();}
-    else localStorage.removeItem('mafia_session');
+    if(player){
+      currentUser={...player,yandex_token:sess.token};
+      renderAuthUI();
+    }else{
+      localStorage.removeItem('mafia_session');
+    }
   }catch(e){console.warn('Session restore:',e);}
 }
+  
 function renderAuthUI(){
   const footer=document.getElementById('authFooter');
   const dName=document.getElementById('drawerName');
@@ -1353,14 +1385,17 @@ function renderAuthUI(){
 
 // =================== INIT ===================
 (async function(){
-  await initDB();
+  // Показываем скелетон сразу
   renderDates();
-  await loadGames();
-  renderAbout();
   renderAuthUI();
+  renderAbout();
+  // Параллельно грузим БД и игры
+  await initDB();
+  loadGames(); // не await — не блокируем
+  // Проверяем авторизацию
   const fromYandex=await handleYandexCallback();
   if(!fromYandex)await restoreSession();
-  renderPF();
+  // renderPF вызывается внутри showProfile/restoreSession
 })();
 </script>
 </body>
