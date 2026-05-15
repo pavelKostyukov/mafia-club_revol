@@ -1082,12 +1082,35 @@ function showMainView(){showView('main-view');}
 function showProfile(){
   closeDrawer();
   showView('profile-view');
+  const notAuth=document.getElementById('profile-not-auth');
+  const auth=document.getElementById('profile-auth');
   if(!currentUser){
-    document.getElementById('profile-not-auth').style.display='block';
-    document.getElementById('profile-auth').style.display='none';
+    notAuth.style.display='block';
+    auth.style.display='none';
     return;
   }
-  renderPF();
+  notAuth.style.display='none';
+  auth.style.display='block';
+  // заполняем поля явно здесь
+  const ava=currentUser.avatar_url||'';
+  document.getElementById('pf-name').innerHTML=`${currentUser.name||'—'} <span class="edit-hint">✏️</span>`;
+  document.getElementById('pf-title').textContent=(currentUser.title||'—')+' ✏️';
+  document.getElementById('pf-star').textContent=currentUser.star_status||'—';
+  document.getElementById('pf-badge').textContent=currentUser.badge||'—';
+  document.getElementById('pf-cm-g').textContent=currentUser.city_mafia_games||0;
+  document.getElementById('pf-cm-w').textContent=currentUser.city_mafia_wins||0;
+  document.getElementById('pf-sm-g').textContent=currentUser.sport_mafia_games||0;
+  document.getElementById('pf-sm-w').textContent=currentUser.sport_mafia_wins||0;
+  document.getElementById('pf-d-g').textContent=currentUser.dice_games||0;
+  document.getElementById('pf-d-w').textContent=currentUser.dice_wins||0;
+  const pfAva=document.getElementById('pf-ava');
+  if(pfAva)pfAva.style.backgroundImage=ava?`url('${ava}')`:'none';
+  const aH=imgH(ava);
+  const navAva=document.getElementById('navAvatar');
+  const drAva=document.getElementById('drawerAva');
+  if(navAva)navAva.innerHTML=aH;
+  if(drAva)drAva.innerHTML=aH;
+  loadMyBookings();
 }
 function goHome(){showView('main-view');}
 function goToSchedule(){showView('main-view');requestAnimationFrame(()=>document.querySelector('.cal-section').scrollIntoView({behavior:'smooth'}));}
