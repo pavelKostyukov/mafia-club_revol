@@ -852,6 +852,11 @@ function showDetail(id){
 // =================== BOOKING MODAL ===================
 let activeG=null,selSeat=null;
 function openModal(id){
+  if(!currentUser){
+  alert('Войдите через Яндекс, чтобы записаться на игру');
+  yandexLogin();
+  return;
+}
   const g=allG.find(x=>String(x.id)===String(id));if(!g)return;
   activeG=g;selSeat=null;
   if(currentUser){
@@ -987,7 +992,9 @@ function bookingItemH(r,type){
   const time=r.games?.start_at?ft(r.games.start_at):'';
   const price=r.games?.price?r.games.price+'₽':'';
   const isUpcoming=type==='upcoming';
-  return`<div class="booking-item" style="${isUpcoming?'':'opacity:.6'}">
+  return`<div class="booking-item" style="${isUpcoming?'':'opacity:.6'
+                                          <button onclick="cancelBooking('${r.id}')" style="font-size:11px;color:var(--red);padding:4px 8px;border:1px solid #fca5a5;border-radius:6px;background:white;">Отписаться</button>
+                                          }">
     <div class="bi-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     </div>
@@ -997,6 +1004,15 @@ function bookingItemH(r,type){
     </div>
     <div class="bi-seat">Место ${r.seat_number||'—'}</div>
   </div>`;
+}
+
+  async function cancelBooking(regId){
+  if(!confirm('Отписаться от игры?'))return;
+  if(!sb){alert('Демо-режим');return;}
+  const{error}=await sb.from('registrations').update({status:'cancelled'}).eq('id',regId);
+  if(error){alert('Ошибка: '+error.message);return;}
+  loadMyBookings();
+  loadGames();
 }
 
 function showMyBookings(){
@@ -1064,7 +1080,16 @@ function showView(id){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function showMainView(){showView('main-view');}
-function showProfile(){closeDrawer();showView('profile-view');renderPF();}
+function showProfile(){
+  closeDrawer();
+  showView('profile-view');
+  if(!currentUser){
+    document.getElementById('profile-not-auth').style.display='block';
+    document.getElementById('profile-auth').style.display='none';
+    return;
+  }
+  renderPF();
+}
 function goHome(){showView('main-view');}
 function goToSchedule(){showView('main-view');requestAnimationFrame(()=>document.querySelector('.cal-section').scrollIntoView({behavior:'smooth'}));}
 function goToAbout(){showView('main-view');requestAnimationFrame(()=>document.getElementById('aboutSec').scrollIntoView({behavior:'smooth'}));}
@@ -1245,7 +1270,14 @@ async function handleYandexCallback(){
 }
 async function loginWithToken(token){
   const footer=document.getElementById('authFooter');
-  if(footer)footer.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:8px;display:flex;align-items:center;justify-content:center;gap:8px"><div class="spin" style="width:18px;height:18px;border-width:2px;"></div>Входим...</div>';
+  if(footer)footer.innerHTML='<div style="text-align:center;padding:12px;font-size:13px;color:var(--blue);display:flex;align-items:center;justify-content:center;gap:8px"><div class="spin" style="width:18px;height:18px;border-width:2px;border-top-color:var(--blue);border-color:var(--border);"></div>Загружаем профиль из Яндекса...</div>';
+
+// Показываем уведомление вверху страницы
+const toast=document.createElement('div');
+toast.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1d6eea;color:white;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+toast.textContent='⏳ Входим через Яндекс...';
+document.body.appendChild(toast);
+setTimeout(()=>toast.remove(),5000);
   try{
     const res=await fetch('https://login.yandex.ru/info?format=json',{headers:{Authorization:'OAuth '+token}});
     if(!res.ok)throw new Error('Яндекс вернул ошибку '+res.status);
@@ -1274,6 +1306,11 @@ async function loginWithToken(token){
     currentUser={...player,yandex_token:token};
     localStorage.setItem('mafia_session',JSON.stringify({token,player_id:player.id}));
     renderAuthUI();renderPF();
+    const ok=document.createElement('div');
+ok.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#16a34a;color:white;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+ok.textContent='✅ Вы вошли как '+player.name;
+document.body.appendChild(ok);
+setTimeout(()=>ok.remove(),3000);
   }catch(e){
     console.error('❌ Auth error:',e);
     alert('Ошибка входа: '+e.message+'\n\nПроверьте Redirect URI в Яндекс OAuth:\n'+REDIRECT_URI);
@@ -1303,6 +1340,8 @@ function renderAuthUI(){
       <button class="loginbtn" style="background:var(--bg2);color:var(--text);border:1px solid var(--bord2);" onclick="yandexLogout()">Выйти из аккаунта</button>`;
     if(dName)dName.textContent=currentUser.name;
     if(dSub)dSub.textContent=currentUser.title||'Игрок клуба';
+    if(navAva)navAva.style.opacity='0.5'; // пока грузится
+setTimeout(()=>{if(navAva)navAva.style.opacity='1';},1000);
     const aH=imgH(currentUser.avatar_url);
     if(navAva)navAva.innerHTML=aH;
     if(drAva)drAva.innerHTML=aH;
