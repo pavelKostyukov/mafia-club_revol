@@ -1300,8 +1300,9 @@ async function handleYandexCallback(){
   const token=params.get('access_token');
   if(!token)return false;
   history.replaceState(null,'',window.location.pathname);
-  await loginWithToken(token);
-  return true;
+await loginWithToken(token);
+showProfile();
+return true;
 }
 
 async function loginWithToken(token){
@@ -1341,9 +1342,9 @@ async function loginWithToken(token){
     }
     currentUser={...player,yandex_token:token};
     localStorage.setItem('mafia_session',JSON.stringify({token,player_id:player.id}));
-    showToast('✅ Вы вошли как '+player.name,'green');
-    renderAuthUI();
-    showProfile(); // сразу показываем профиль
+
+showToast('✅ Вы вошли как '+player.name,'green');
+renderAuthUI();
   }catch(e){
     console.error(e);
     showToast('❌ Ошибка входа: '+e.message,'red');
