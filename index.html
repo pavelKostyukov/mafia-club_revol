@@ -1076,7 +1076,7 @@ const VIEWS=['main-view','profile-view','game-detail-view','admin-view','docs-vi
 function showView(id){
   VIEWS.forEach(v=>{
     const el=document.getElementById(v);
-    if(el)el.style.display=v===id?'':'none';
+    if(el)el.style.display=v===id?'block':'none';
   });
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -1402,13 +1402,20 @@ function renderAuthUI(){
 
 // =================== INIT ===================
 (async function(){
-  // Показываем скелетон сразу
+(async function(){
   renderDates();
   renderAuthUI();
   renderAbout();
-  // Параллельно грузим БД и игры
-  await initDB();
-  loadGames(); // не await — не блокируем
+  await initDB(); // ждём БД
+  await restoreSession(); // только после БД
+  const fromYandex=await handleYandexCallback();
+  if(!fromYandex && !currentUser){
+    // сессии нет — просто показываем главную
+  }
+  loadGames();
+})();
+
+  
   // Проверяем авторизацию
   const fromYandex=await handleYandexCallback();
   if(!fromYandex)await restoreSession();
