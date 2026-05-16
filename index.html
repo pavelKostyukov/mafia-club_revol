@@ -824,7 +824,8 @@ async function loadGames(){
 
 // =================== GAME DETAIL ===================
 function showDetail(id){
-const g=window._adminGames?.find(x=>String(x.id)===String(id))||allG.find(x=>String(x.id)===String(id));
+  const g=window._adminGames?.find(x=>String(x.id)===String(id))||allG.find(x=>String(x.id)===String(id));
+  if(!g)return;
   showView('game-detail-view');
   const cov=document.getElementById('gdCov');
   cov.style.cssText=g.cover_image_url?`background-image:url('${g.cover_image_url}');background-size:cover;background-position:center;`:'background:linear-gradient(135deg,#1e1b4b,#0f172a);';
@@ -1149,7 +1150,7 @@ function showGameForm(id=null){
   document.getElementById('gfTitle').textContent=id?'Редактировать игру':'Новая игра';
   document.getElementById('gId').value=id||'';
   if(id){
-    const g=allG.find(x=>String(x.id)===String(id));
+  const g=(window._adminGames||[]).find(x=>String(x.id)===String(id))||allG.find(x=>String(x.id)===String(id));
     if(g){
       document.getElementById('gTitle').value=g.title||'';document.getElementById('gSub').value=g.subtitle||'';
       document.getElementById('gType').value=g.game_type||'city_mafia';
