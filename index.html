@@ -824,7 +824,7 @@ async function loadGames(){
 
 // =================== GAME DETAIL ===================
 function showDetail(id){
-  const g=allG.find(x=>String(x.id)===String(id));if(!g)return;
+const g=window._adminGames?.find(x=>String(x.id)===String(id))||allG.find(x=>String(x.id)===String(id));
   showView('game-detail-view');
   const cov=document.getElementById('gdCov');
   cov.style.cssText=g.cover_image_url?`background-image:url('${g.cover_image_url}');background-size:cover;background-position:center;`:'background:linear-gradient(135deg,#1e1b4b,#0f172a);';
@@ -970,7 +970,7 @@ async function loadMyBookings(){
       return;
     }
     const now=new Date();
-    const upcoming=data.filter(r=>r.games?.start_at&&new Date(r.games.start_at)>now);
+    const upcoming=data.filter(r=>r.games?.start_at&&new Date(r.games.start_at)>new Date(Date.now()-3*60*60*1000));
     const past=data.filter(r=>r.games?.start_at&&new Date(r.games.start_at)<=now);
     let html='';
     if(upcoming.length){
@@ -989,6 +989,7 @@ async function loadMyBookings(){
 }
 
 function bookingItemH(r,type){
+  const isUpcoming=true;
   const gameName=r.games?.title||tl(r.games?.game_type)||'Игра';
   const date=r.games?.start_at?fd(new Date(r.games.start_at)):'';
   const time=r.games?.start_at?ft(r.games.start_at):'';
@@ -1139,7 +1140,7 @@ async function loadAdminGames(){
   const list=document.getElementById('adminGames');list.innerHTML='<div class="lwrap2"><div class="spin"></div></div>';
   try{
     let games=[];
-    if(sb){const{data,error}=await sb.from('games').select('*').order('start_at');if(error)throw error;games=data||[];}
+    if(sb){const{data,error}=await sb.from('games').select('*').order('start_at');if(error)throw error;games=data||[];window._adminGames=games;}
     else games=demoGames(today);
     if(!games.length){list.innerHTML='<p style="color:var(--muted);text-align:center">Нет игр</p>';return;}
     list.innerHTML=games.map(g=>`<div class="aitem"><div class="aitem-info"><h3>${g.title||tl(g.game_type)}</h3><p>${fd(new Date(g.start_at))} · ${ft(g.start_at)} · ${g.price}₽</p></div><div class="aitem-actions"><button class="edit" onclick="editGame('${g.id}')">Редактировать</button><button class="del" onclick="delGame('${g.id}')">Удалить</button></div></div>`).join('');
@@ -1168,7 +1169,7 @@ function closeGameForm(){document.getElementById('gameModal').classList.remove('
 async function saveGame(e){
   e.preventDefault();
   const id=document.getElementById('gId').value;
-  const data={title:document.getElementById('gTitle').value,subtitle:document.getElementById('gSub').value||null,game_type:document.getElementById('gType').value,start_at:new Date(document.getElementById('gStart').value).toISOString(),end_at:new Date(document.getElementById('gEnd').value).toISOString(),location:document.getElementById('gLoc').value,price:parseInt(document.getElementById('gPrice').value),max_seats:parseInt(document.getElementById('gSeats').value),host_name:document.getElementById('gHostN').value,host_role:document.getElementById('gHostR').value||'мастер',host_photo_url:document.getElementById('gHostPhoto').value||null,organizer_name:document.getElementById('gOrgN').value||null,organizer_role:'организатор',organizer_photo_url:document.getElementById('gOrgPhoto').value||null,cover_image_url:document.getElementById('gCover').value||null,status:'scheduled'};
+  const data={title:document.getElementById('gTitle').value,subtitle:document.getElementById('gSub').value||null,game_type:document.getElementById('gType').value,start_at:document.getElementById('gStart').value+':00',,end_at:new Date(document.getElementById('gEnd').value).toISOString(),location:document.getElementById('gLoc').value,price:parseInt(document.getElementById('gPrice').value),max_seats:parseInt(document.getElementById('gSeats').value),host_name:document.getElementById('gHostN').value,host_role:document.getElementById('gHostR').value||'мастер',host_photo_url:document.getElementById('gHostPhoto').value||null,organizer_name:document.getElementById('gOrgN').value||null,organizer_role:'организатор',organizer_photo_url:document.getElementById('gOrgPhoto').value||null,cover_image_url:document.getElementById('gCover').value||null,status:'scheduled'};
   if(!sb){alert('Демо-режим');closeGameForm();return;}
   try{let res=id?await sb.from('games').update(data).eq('id',id):await sb.from('games').insert(data);if(res.error)throw res.error;alert('✅ Сохранено!');closeGameForm();loadAdminGames();loadGames();}catch(e){alert('Ошибка: '+e.message);}
 }
