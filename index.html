@@ -989,7 +989,6 @@ async function loadMyBookings(){
 }
 
 function bookingItemH(r,type){
-  const isUpcoming=true;
   const gameName=r.games?.title||tl(r.games?.game_type)||'Игра';
   const date=r.games?.start_at?fd(new Date(r.games.start_at)):'';
   const time=r.games?.start_at?ft(r.games.start_at):'';
@@ -1169,7 +1168,8 @@ function closeGameForm(){document.getElementById('gameModal').classList.remove('
 async function saveGame(e){
   e.preventDefault();
   const id=document.getElementById('gId').value;
-  const data={title:document.getElementById('gTitle').value,subtitle:document.getElementById('gSub').value||null,game_type:document.getElementById('gType').value,start_at:document.getElementById('gStart').value+':00',,end_at:new Date(document.getElementById('gEnd').value).toISOString(),location:document.getElementById('gLoc').value,price:parseInt(document.getElementById('gPrice').value),max_seats:parseInt(document.getElementById('gSeats').value),host_name:document.getElementById('gHostN').value,host_role:document.getElementById('gHostR').value||'мастер',host_photo_url:document.getElementById('gHostPhoto').value||null,organizer_name:document.getElementById('gOrgN').value||null,organizer_role:'организатор',organizer_photo_url:document.getElementById('gOrgPhoto').value||null,cover_image_url:document.getElementById('gCover').value||null,status:'scheduled'};
+  const data={title:document.getElementById('gTitle').value,subtitle:document.getElementById('gSub').value||null,game_type:document.getElementById('gType').value,start_at:document.getElementById('gStart').value+':00',end_at:new Date(document.getElementById('gEnd').value).toISOString(),
+,end_at:new Date(document.getElementById('gEnd').value).toISOString(),location:document.getElementById('gLoc').value,price:parseInt(document.getElementById('gPrice').value),max_seats:parseInt(document.getElementById('gSeats').value),host_name:document.getElementById('gHostN').value,host_role:document.getElementById('gHostR').value||'мастер',host_photo_url:document.getElementById('gHostPhoto').value||null,organizer_name:document.getElementById('gOrgN').value||null,organizer_role:'организатор',organizer_photo_url:document.getElementById('gOrgPhoto').value||null,cover_image_url:document.getElementById('gCover').value||null,status:'scheduled'};
   if(!sb){alert('Демо-режим');closeGameForm();return;}
   try{let res=id?await sb.from('games').update(data).eq('id',id):await sb.from('games').insert(data);if(res.error)throw res.error;alert('✅ Сохранено!');closeGameForm();loadAdminGames();loadGames();}catch(e){alert('Ошибка: '+e.message);}
 }
@@ -1403,30 +1403,19 @@ function renderAuthUI(){
 
 // =================== INIT ===================
 (async function(){
-(async function(){
   renderDates();
   renderAuthUI();
   renderAbout();
-  await initDB(); // ждём БД
-  await restoreSession(); // только после БД
+  await initDB();
+  await restoreSession();
   const fromYandex=await handleYandexCallback();
-  if(!fromYandex && !currentUser){
-    // сессии нет — просто показываем главную
-  }
   loadGames();
-})();
-
-  
-  // Проверяем авторизацию
-  const fromYandex=await handleYandexCallback();
-  if(!fromYandex)await restoreSession();
-  // renderPF вызывается внутри showProfile/restoreSession
   setInterval(()=>{
-  document.getElementById('debug').textContent=
-    'user:'+(currentUser?currentUser.name:'null')+
-    ' profile-view:'+document.getElementById('profile-view').style.display+
-    ' auth:'+document.getElementById('profile-auth').style.display;
-},500);
+    document.getElementById('debug').textContent=
+      'user:'+(currentUser?currentUser.name:'null')+
+      ' profile-view:'+document.getElementById('profile-view').style.display+
+      ' auth:'+document.getElementById('profile-auth').style.display;
+  },500);
 })();
 </script>
 </body>
