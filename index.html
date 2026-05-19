@@ -477,6 +477,30 @@ async function uploadAva(e){
   }
 }
 
+  // Сжимаем картинку до загрузки
+function compressImage(file, maxWidth = 800, quality = 0.75) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    
+    img.onload = () => {
+      // Считаем новый размер
+      let w = img.width, h = img.height;
+      if (w > maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+      
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    };
+    img.src = url;
+  });
+}
+
 // =================== VIEWS ===================
 const VIEWS=['main-view','profile-view','game-detail-view','admin-view','docs-view'];
 function showView(id){
@@ -621,11 +645,47 @@ async function loadAdminImages(){
   if(!sb){grid.innerHTML='<p style="color:var(--muted);text-align:center">Нет подключения к БД</p>';return;}
   try{const{data,error}=await sb.from('image_urls').select('*').order('created_at',{ascending:false});if(error)throw error;if(!data?.length){grid.innerHTML='<p style="color:var(--muted);text-align:center">Нет картинок</p>';return;}grid.innerHTML=data.map(i=>`<div class="imgcard"><img src="${i.url}" onerror="this.style.display='none'"><div class="imgcopy" onclick="copyUrl('${i.url}')">Копировать</div><div class="imgurl">${i.name||i.url}</div></div>`).join('');}catch(e){grid.innerHTML='<p style="color:red;">'+e.message+'</p>';}
 }
+
+  // Ваша функция загрузки
 async function uploadImg(){
-  const file=document.getElementById('imgFile').files[0];if(!file){alert('Выберите файл');return;}
-  const st=document.getElementById('ustatus');st.innerHTML='<span class="spin-sm"></span>Загружаем...';st.style.color='var(--blue)';
-  try{const form=new FormData();form.append('image',file);form.append('key',IMGBB_KEY);const res=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:form});const json=await res.json();if(!json.success)throw new Error(json.error?.message||'Ошибка imgbb');const url=json.data.url;if(sb)await sb.from('image_urls').insert({url,name:file.name});st.innerHTML=`✅ Загружено!<br><input style="width:100%;margin-top:6px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;" value="${url}" readonly onclick="this.select()">`;st.style.color='var(--green)';document.getElementById('imgFile').value='';loadAdminImages();}catch(e){st.textContent='❌ '+e.message;st.style.color='var(--red)';}
+  const file = document.getElementById('imgFile').files[0];
+  if(!file) { alert('Выберите файл'); return; }
+  
+  const st = document.getElementById('ustatus');
+  st.innerHTML = '<span class="spin-sm"></span>Загружаем...';
+  st.style.color = 'var(--blue)';
+  
+  try {
+    //  ДОБАВЛЯЕМ КОМПРЕССИЮ ТУТ
+    const compressed = await compressImage(file, 1024, 0.8);
+    
+    const form = new FormData();
+    form.append('image', compressed, file.name);  // ← используем compressed вместо file
+    form.append('key', IMGBB_KEY);
+    
+    const res = await fetch('https://api.imgbb.com/1/upload', {
+      method: 'POST',
+      body: form
+    });
+    
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error?.message || 'Ошибка imgbb');
+    
+    const url = json.data.url;
+    if(sb) await sb.from('image_urls').insert({url, name:file.name});
+    
+    st.innerHTML = `✅ Загружено!<br><input style="width:100%;margin-top:6px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;" value="${url}" readonly onclick="this.select()">`;
+    st.style.color = 'var(--green)';
+    document.getElementById('imgFile').value = '';
+    loadAdminImages();
+    
+  } catch(e) {
+    st.textContent = '' + e.message;
+    st.style.color = 'var(--red)';
+  }
 }
+
+  
 function copyUrl(url){navigator.clipboard.writeText(url).then(()=>alert('✅ Скопировано'));}
 
 // =================== DOCUMENTS ===================
